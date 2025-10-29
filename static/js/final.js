@@ -176,12 +176,18 @@ document.addEventListener("DOMContentLoaded", () => {
   if (askBtn) askBtn.addEventListener("click", askQuestion);
   if (questionInp) {
     questionInp.addEventListener("keydown", (ev) => {
-      if (ev.key === "Enter") {
+      if (ev.key === "Enter" && !ev.shiftKey) {
+        // Enter alone → add newline (do nothing, allow default)
+        // Optional: you can just return
+        return;
+      } else if (ev.key === "Enter" && ev.shiftKey) {
+        // Shift+Enter → submit
         ev.preventDefault();
         askQuestion();
       }
     });
   }
+
 
   // ---- 4) Generate Quiz (server) + render + export ----
   let lastQuiz = [];

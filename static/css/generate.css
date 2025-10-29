@@ -228,7 +228,7 @@ ul.nav > li > a.active {
 .progress-fill {
   height: 100%;
   width: 80%;
-  background: #ff7a00;
+  background: #1e4ea8;
   transition: width 0.3s;
 }
 
@@ -277,7 +277,7 @@ span#rangeValue {
   height: 6px;
   background: linear-gradient(
     to right,
-    #ff7a00 var(--range-progress),
+    #1e4ea8 var(--range-progress),
     #e0e0e0 var(--range-progress)
   );
   border-radius: 5px;
@@ -291,7 +291,7 @@ span#rangeValue {
   height: 16px;
   width: 16px;
   border-radius: 50%;
-  background: #ff7a00;
+  background: #1e4ea8;
   cursor: grab;
   border: none;
   z-index: 3;
@@ -461,7 +461,6 @@ background-color: rgb(248, 249, 250, 0.8);
 
 textarea {
   width: 97%;
-  height: 80px;
   border-radius: 10px;
   border: 1px solid #ccc;
   padding: 10px;
@@ -475,7 +474,7 @@ textarea::placeholder {
 }
 
 .mybutton {
-  background-color: #ff7a00;
+  background-color: #1e4ea8;
   color: white;
   border: none;
   padding: 10px 20px;
@@ -488,7 +487,7 @@ textarea::placeholder {
 
 
 .mybutton:hover {
-  background-color: #15408a;
+  background-color: #2474ff;
   transition: all 0.5s;
 }
 
