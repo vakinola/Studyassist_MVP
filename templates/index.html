@@ -1,5 +1,6 @@
 <!doctype html>
 <html class="no-js" lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -19,19 +20,21 @@
 
   <script src="{{ url_for('static', filename='js/vendor/modernizr-2.8.3-respond-1.4.2.min.js') }}"></script>
 </head>
+
 <body data-bs-spy="scroll" data-bs-target="#navmenu" data-bs-offset="70">
 
   <!-- Flash messages -->
   <div class="container mt-3">
     {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-          </div>
-        {% endfor %}
-      {% endif %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show"
+      role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
     {% endwith %}
   </div>
 
@@ -57,7 +60,7 @@
             <ul class="nav">
               <li><a class="active" href="{{ url_for('index') }}">Home <span class="sr-only">(current)</span></a></li>
               <li><a href="{{ url_for('generate') }}">Upload Notebook</a></li>
-              <li><a href="#">About</a></li>
+              <li><a href="{{ url_for('results') }}">Results</a></li>
               <!-- <li><a href="#">Pricing</a></li> -->
             </ul>
           </div>
@@ -106,4 +109,5 @@
   <script src="{{ url_for('static', filename='js/vendor/jquery.slicknav.min.js') }}"></script>
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
+
 </html>

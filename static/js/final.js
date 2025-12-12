@@ -82,8 +82,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   fileInput?.addEventListener("change", (e) => {
     const file = e.target.files?.[0] || null;
-    if (fileStatus) fileStatus.textContent = file ? `Selected: ${file.name}` : "";
 
+    // NEW: show selected file name
+    const selectedFileName = document.getElementById("selectedFileName");
+    if (selectedFileName) selectedFileName.textContent = file ? `Selected file: ${file.name}` : "";
+
+    // EXISTING preview logic
     if (filePreview && file && (file.type === "text/plain" || /\.txt$/i.test(file.name))) {
       const reader = new FileReader();
       reader.onload = (ev) => (filePreview.textContent = String(ev.target?.result || ""));
@@ -91,6 +95,9 @@ document.addEventListener("DOMContentLoaded", () => {
     } else if (filePreview) {
       filePreview.textContent = file ? "📄 File selected. Preview only available for .txt files." : "";
     }
+
+    // existing fileStatus update if present
+    if (fileStatus) fileStatus.textContent = file ? `Selected: ${file.name}` : "";
   });
 
 
@@ -165,7 +172,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (askBtn) askBtn.disabled = true;
     setStatus("Answering...");
     try {
-      const data = await postJSON("/ask", { question: q, filename});
+      const data = await postJSON("/ask", { question: q, filename });
       ensureAnswerBox();
       const answerText = $("answerText");
       if (answerText) answerText.textContent = data.answer || "(no answer)";
@@ -192,127 +199,127 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-// ------------------------------------
-// Handle upload with real progress (0–40%)
-// ------------------------------------
-// Single-source progress via /progress/<job_id>
-//  - Create job first (/init_upload) so poller can start
-//  - Report upload % to server (/progress_update)
-//  - Server background thread continues with same job_id
-// ------------------------------------
-const uploadForm = document.getElementById("uploadForm");
-if (uploadForm) {
-  uploadForm.addEventListener("submit", async (e) => {
-    // Identify which button submitted the form
-    const submitter = e.submitter || document.activeElement;
-    const formaction = submitter?.getAttribute?.("formaction") || "";
-    const isReset = formaction.includes("/reset");
+  // ------------------------------------
+  // Handle upload with real progress (0–40%)
+  // ------------------------------------
+  // Single-source progress via /progress/<job_id>
+  //  - Create job first (/init_upload) so poller can start
+  //  - Report upload % to server (/progress_update)
+  //  - Server background thread continues with same job_id
+  // ------------------------------------
+  const uploadForm = document.getElementById("uploadForm");
+  if (uploadForm) {
+    uploadForm.addEventListener("submit", async (e) => {
+      // Identify which button submitted the form
+      const submitter = e.submitter || document.activeElement;
+      const formaction = submitter?.getAttribute?.("formaction") || "";
+      const isReset = formaction.includes("/reset");
 
-    // If it's the Reset button, allow normal form submit to /reset
-    if (isReset) {
-      return; // don't preventDefault; let the browser post to /reset
-    }
+      // If it's the Reset button, allow normal form submit to /reset
+      if (isReset) {
+        return; // don't preventDefault; let the browser post to /reset
+      }
 
-    // Otherwise, handle the Upload via AJAX
-    e.preventDefault();
+      // Otherwise, handle the Upload via AJAX
+      e.preventDefault();
 
-    const fileInput = document.getElementById("fileInput");
-    const file = fileInput?.files?.[0];
-    if (!file) { alert("Please choose a file first!"); return; }
+      const fileInput = document.getElementById("fileInput");
+      const file = fileInput?.files?.[0];
+      if (!file) { alert("Please choose a file first!"); return; }
 
-    // 1) Create job_id before uploading
-    const j = await fetch("/init_upload", { method: "POST" }).then(r => r.json());
-    if (!j.ok) { alert("Could not start job"); return; }
-    const jobId = j.job_id;
+      // 1) Create job_id before uploading
+      const j = await fetch("/init_upload", { method: "POST" }).then(r => r.json());
+      if (!j.ok) { alert("Could not start job"); return; }
+      const jobId = j.job_id;
 
-    // 2) Show progress & expose jobId for poller
-    const wrap  = document.getElementById("buildProgress");
-    const bar   = document.getElementById("buildBar");
-    const label = document.getElementById("buildLabel");
-    if (wrap) wrap.style.display = "block";
-    if (bar) {
-      bar.classList.remove("bg-danger");     // in case a prior error colored it red
-      bar.style.backgroundColor = "#22c55e"; // green
-      bar.style.width = "0%";
-    }
-    if (label) label.textContent = "Uploading… 0%";
-    if (document.body) document.body.dataset.jobId = jobId;
+      // 2) Show progress & expose jobId for poller
+      const wrap = document.getElementById("buildProgress");
+      const bar = document.getElementById("buildBar");
+      const label = document.getElementById("buildLabel");
+      if (wrap) wrap.style.display = "block";
+      if (bar) {
+        bar.classList.remove("bg-danger");     // in case a prior error colored it red
+        bar.style.backgroundColor = "#22c55e"; // green
+        bar.style.width = "0%";
+      }
+      if (label) label.textContent = "Uploading… 0%";
+      if (document.body) document.body.dataset.jobId = jobId;
 
-    // ✅ start the poller now (so it can render 0→5→10… during upload)
-    startProgressPoller(jobId);
+      // ✅ start the poller now (so it can render 0→5→10… during upload)
+      startProgressPoller(jobId);
 
-    // 3) Upload with progress → report to server
-    const formData = new FormData();
-    formData.append("file", file);
+      // 3) Upload with progress → report to server
+      const formData = new FormData();
+      formData.append("file", file);
 
-    const xhr = new XMLHttpRequest();
-    xhr.addEventListener("load", () => {
-      window.location.href = "/generate"; // poller shows build→summary
+      const xhr = new XMLHttpRequest();
+      xhr.addEventListener("load", () => {
+        window.location.href = "/generate"; // poller shows build→summary
+      });
+      xhr.addEventListener("error", () => {
+        if (label) label.textContent = "Upload error!";
+        if (bar) bar.classList.add("bg-danger");
+      });
+      xhr.open("POST", uploadForm.action, true);
+      xhr.setRequestHeader("X-Job-Id", jobId);
+      xhr.send(formData);
     });
-    xhr.addEventListener("error", () => {
-      if (label) label.textContent = "Upload error!";
-      if (bar) bar.classList.add("bg-danger");
-    });
-    xhr.open("POST", uploadForm.action, true);
-    xhr.setRequestHeader("X-Job-Id", jobId);
-    xhr.send(formData);
-  });
-}
+  }
 
 
 
-// ----------------------------
-// Upload/Build/Summary polling (server is source of truth)
-// ----------------------------
-const buildProgress = document.getElementById("buildProgress");
-const buildBar      = document.getElementById("buildBar");
-const buildLabel    = document.getElementById("buildLabel");
+  // ----------------------------
+  // Upload/Build/Summary polling (server is source of truth)
+  // ----------------------------
+  const buildProgress = document.getElementById("buildProgress");
+  const buildBar = document.getElementById("buildBar");
+  const buildLabel = document.getElementById("buildLabel");
 
-function startProgressPoller(jobId) {
-  if (!jobId || !buildProgress || !buildBar || !buildLabel || window.__progressPoller) return;
+  function startProgressPoller(jobId) {
+    if (!jobId || !buildProgress || !buildBar || !buildLabel || window.__progressPoller) return;
 
-  buildProgress.style.display = "block";
-  buildBar.classList.remove("bg-danger");
-  buildBar.style.backgroundColor = "#22c55e";
+    buildProgress.style.display = "block";
+    buildBar.classList.remove("bg-danger");
+    buildBar.style.backgroundColor = "#22c55e";
 
-  const stop = () => { clearInterval(window.__progressPoller); window.__progressPoller = null; };
+    const stop = () => { clearInterval(window.__progressPoller); window.__progressPoller = null; };
 
-  window.__progressPoller = setInterval(async () => {
-    try {
-      const resp = await fetch(`/progress/${jobId}`, { cache: "no-store" });
-      if (!resp.ok) { stop(); buildLabel.textContent = "Progress unavailable."; buildBar.classList.add("bg-danger"); return; }
+    window.__progressPoller = setInterval(async () => {
+      try {
+        const resp = await fetch(`/progress/${jobId}`, { cache: "no-store" });
+        if (!resp.ok) { stop(); buildLabel.textContent = "Progress unavailable."; buildBar.classList.add("bg-danger"); return; }
 
-      const data = await resp.json();
-      const pct  = Math.max(0, Math.min(100, Number(data.pct || 0)));
+        const data = await resp.json();
+        const pct = Math.max(0, Math.min(100, Number(data.pct || 0)));
 
-      buildBar.style.width = pct + "%";
-      buildLabel.textContent = `${data.phase || "Working"}… ${pct}%`;
+        buildBar.style.width = pct + "%";
+        buildLabel.textContent = `${data.phase || "Working"}… ${pct}%`;
 
-      const phase = (data.phase || "").toLowerCase();
-      if (phase === "completed") {
+        const phase = (data.phase || "").toLowerCase();
+        if (phase === "completed") {
+          stop();
+          buildLabel.textContent = "Completed 100%";
+          // Let /generate pull summary out of PROGRESS and put it in session
+          setTimeout(() => location.reload(), 400);
+        } else if (phase === "error") {
+          stop();
+          buildLabel.textContent = `Error: ${data.error || "Unknown error"}`;
+          buildBar.classList.add("bg-danger");
+        }
+      } catch (e) {
         stop();
-        buildLabel.textContent = "Completed 100%";
-        // Let /generate pull summary out of PROGRESS and put it in session
-        setTimeout(() => location.reload(), 400);
-      } else if (phase === "error") {
-        stop();
-        buildLabel.textContent = `Error: ${data.error || "Unknown error"}`;
+        buildLabel.textContent = "Could not fetch progress.";
         buildBar.classList.add("bg-danger");
       }
-    } catch (e) {
-      stop();
-      buildLabel.textContent = "Could not fetch progress.";
-      buildBar.classList.add("bg-danger");
-    }
-  }, 800); // a bit faster during upload feels nicer
+    }, 800); // a bit faster during upload feels nicer
 
-  window.addEventListener("beforeunload", stop, { once: true });
-  document.addEventListener("visibilitychange", () => { if (document.hidden) stop(); });
-}
+    window.addEventListener("beforeunload", stop, { once: true });
+    document.addEventListener("visibilitychange", () => { if (document.hidden) stop(); });
+  }
 
-// Auto-start when page already has a job id (e.g., /generate)
-const initialJobId = document.body?.dataset?.jobId || "";
-if (initialJobId) startProgressPoller(initialJobId);
+  // Auto-start when page already has a job id (e.g., /generate)
+  const initialJobId = document.body?.dataset?.jobId || "";
+  if (initialJobId) startProgressPoller(initialJobId);
 
 
 
@@ -328,7 +335,7 @@ if (initialJobId) startProgressPoller(initialJobId);
       item.className = 'list-group-item';
       item.dataset.correct = correct;
 
-      const choicesHtml = ['A','B','C','D'].map((L, i) => {
+      const choicesHtml = ['A', 'B', 'C', 'D'].map((L, i) => {
         const raw = (q.choices?.[i] || '').trim();
         const labelText = raw.replace(/^[A-D]\)\s*/i, '');
         const id = `q${idx}-${L}`;
@@ -342,7 +349,7 @@ if (initialJobId) startProgressPoller(initialJobId);
         `;
       }).join('');
 
-        item.innerHTML = `
+      item.innerHTML = `
           <div class="fw-semibold mb-1">${q.question || ('Question ' + (idx + 1))}</div>
           ${choicesHtml}
           <div class="mt-2" id="feedback-${idx}"></div> <!-- feedback placeholder -->
@@ -354,8 +361,8 @@ if (initialJobId) startProgressPoller(initialJobId);
     });
 
     if (quizResults) quizResults.innerHTML = '';   // clear prior summary
-    if (quizStatus)  quizStatus.textContent = '';  // clear status line
-    if (quizBox)     quizBox.style.display = 'block';
+    if (quizStatus) quizStatus.textContent = '';  // clear status line
+    if (quizBox) quizBox.style.display = 'block';
   }
 
   function gradeQuiz() {
@@ -368,10 +375,10 @@ if (initialJobId) startProgressPoller(initialJobId);
       return {
         idx,
         selected: selected ? selected.value.toUpperCase() : null,
-        correct:  (item.dataset.correct || '').toUpperCase()
+        correct: (item.dataset.correct || '').toUpperCase()
       };
     });
-    
+
     // NEW: grab warning div
     const quizWarning = document.getElementById('quizWarning');
     // Require all answered
@@ -379,14 +386,14 @@ if (initialJobId) startProgressPoller(initialJobId);
     if (unanswered.length) {
       if (quizWarning) quizWarning.textContent = "Please answer all Questions before submitting";
       if (quizResults) quizResults.innerHTML = '';
-      if (quizStatus)  quizStatus.textContent = "";
+      if (quizStatus) quizStatus.textContent = "";
       return; // ⛔ do not reveal anything yet
     }
-    
+
     // if we get here, everything is answered → clear warning
     if (quizWarning) quizWarning.textContent = "";
 
-let correctCount = 0;
+    let correctCount = 0;
 
     answers.forEach(a => {
       const item = items[a.idx];
@@ -395,7 +402,7 @@ let correctCount = 0;
 
       options.forEach(opt => {
         const label = item.querySelector(`label[for="${opt.id}"]`);
-        label.classList.remove('text-success','text-danger');
+        label.classList.remove('text-success', 'text-danger');
 
         // Highlight correct answer green
         if (opt.value.toUpperCase() === a.correct) {
@@ -412,8 +419,8 @@ let correctCount = 0;
       if (ok) correctCount++;
 
       if (feedbackDiv) {
-        feedbackDiv.innerHTML = ok 
-          ? `<span class="text-success fw-bold answer-correct d-inline-block">✅  Correct!</span>` 
+        feedbackDiv.innerHTML = ok
+          ? `<span class="text-success fw-bold answer-correct d-inline-block">✅  Correct!</span>`
           : `<span class="text-danger fw-bold answer-wrong d-inline-block">❌  Wrong. Correct answer: ${a.correct}</span>`;
       }
     });
@@ -514,7 +521,7 @@ let correctCount = 0;
       generateBtn.disabled = true;
       if (quizStatus) quizStatus.textContent = `Generating ${num} questions...`;
       try {
-        const data = await postJSON("/generate_quiz", { num_questions: num, filename,});
+        const data = await postJSON("/generate_quiz", { num_questions: num, filename, });
         lastQuiz = data.quiz || [];
         renderQuiz(lastQuiz);
         attachExportButtons();
@@ -529,7 +536,7 @@ let correctCount = 0;
   // =======================================
   // 5️⃣a. Helper to get selected document
   // ======================================
-    function getSelectedDocName() {
+  function getSelectedDocName() {
     const selected = document.querySelector(".doc-select:checked");
     return selected ? selected.value : null;
   }
@@ -552,12 +559,12 @@ let correctCount = 0;
         if (questionInput) questionInput.value = "";
 
         // Clear previous quiz
-        const quizBox      = document.getElementById("quizBox");
-        const quizList     = document.getElementById("quizList");
-        const quizResults  = document.getElementById("quizResults");
-        const quizStatus   = document.getElementById("quizStatus");
-        const quizWarning  = document.getElementById("quizWarning");
-        const exportDiv    = document.getElementById("export-options");
+        const quizBox = document.getElementById("quizBox");
+        const quizList = document.getElementById("quizList");
+        const quizResults = document.getElementById("quizResults");
+        const quizStatus = document.getElementById("quizStatus");
+        const quizWarning = document.getElementById("quizWarning");
+        const exportDiv = document.getElementById("export-options");
 
         if (quizList) quizList.innerHTML = "";
         if (quizResults) quizResults.innerHTML = "";

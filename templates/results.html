@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description"
+        content="StudyAssists Generate Quiz - Upload and access study notebooks to enhance learning." />
+    <meta name="robots" content="index, follow" />
+    <title>StudyAssists | Generate-Quiz</title>
+
+    <!-- Page CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/generate.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/font-awesome.min.css') }}" />
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+
+        }
+
+        th,
+        td {
+            padding: 10px 12px;
+            border: 1px solid #ccc;
+            text-align: left;
+        }
+
+        th {
+            background-color: #1e4ea8;
+            color: white;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .score {
+            font-weight: bold;
+            color: #1e4ea8;
+        }
+    </style>
+</head>
+
+<body data-job-id="{{ job_id or '' }}">
+    <!-- Header / Top Nav -->
+    <header id="header" class="header-section">
+        <div class="header-container">
+            <nav class="navbar">
+                <a class="brand" href="{{ url_for('index') }}" aria-label="StudyAssists home">
+                    <svg class="brand-icon" width="36" height="36" viewBox="0 0 24 24" aria-hidden="true">
+                        <path fill="#22c1ff" d="M2 7l10-5 10 5v2l-10 5L2 9z"></path>
+                        <path fill="#0ea5a4" d="M2 12l10-5 10 5v2l-10 5L2 14z" opacity="0.15"></path>
+                    </svg>
+                    <span class="brand-text">StudyAssists</span>
+                </a>
+                <div class="d-flex menu-wrap">
+                    <div id="navmenu" class="mainmenu">
+                        <ul class="nav">
+                            <li><a href="{{ url_for('index') }}">Home</a></li>
+                            <li><a class="active" href="{{ url_for('generate') }}">Upload Notebook</a></li>
+                            <li><a href="{{ url_for('results') }}">Results</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Page Columns -->
+    <div class="container page-wrap">
+
+        <!-- ========== MAIN ========== -->
+        <main class="main" id="main">
+            <!-- Mobile header -->
+            <div class="mobile-header">
+                <div class="logo-text">
+                    <a class="brand" href="{{ url_for('index') }}" aria-label="StudyAssists home">
+                        <svg class="brand-icon" width="36" height="36" viewBox="0 0 24 24" aria-hidden="true">
+                            <path fill="#22c1ff" d="M2 7l10-5 10 5v2l-10 5L2 9z"></path>
+                            <path fill="#0ea5a4" d="M2 12l10-5 10 5v2l-10 5L2 14z" opacity="0.15"></path>
+                        </svg>
+                        <span class="brand-text">StudyAssists</span>
+                    </a>
+                </div>
+                <button class="mobile-toggle" id="mobileToggle" aria-label="Toggle menu">
+                    <i class="fa fa-bars" aria-hidden="true"></i>
+                </button>
+            </div>
+
+            <h2> Results</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Uploaded File</th>
+                        <th>Score</th>
+                        <th>Date & Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Math_Notes_Chapter1.pdf</td>
+                        <td class="score">85%</td>
+                        <td>2025-11-29 10:30 AM</td>
+                    </tr>
+                    <tr>
+                        <td>Physics_Revision.docx</td>
+                        <td class="score">92%</td>
+                        <td>2025-11-28 03:15 PM</td>
+                    </tr>
+                    <tr>
+                        <td>Chemistry_Exercises.xlsx</td>
+                        <td class="score">78%</td>
+                        <td>2025-11-27 09:45 AM</td>
+                    </tr>
+                    <tr>
+                        <td>Biology_LectureNotes.pdf</td>
+                        <td class="score">88%</td>
+                        <td>2025-11-26 02:00 PM</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!--
+            <table>
+                <thead>
+                    <tr>
+                        <th>Uploaded File</th>
+                        <th>Score</th>
+                        <th>Date & Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in results %}
+                    <tr>
+                        <td>{{ result.filename }}</td>
+                        <td class="score">{{ result.score }}%</td>
+                        <td>{{ result.test_datetime }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            -->
+
+
+            <footer>© 2025 StudyAssists | All rights reserved</footer>
+        </main>
+        <!-- /MAIN -->
+    </div>
+
+    <!-- Scripts -->
+    <script defer src="{{ url_for('static', filename='js/vendor/jquery-1.12.4.min.js') }}"></script>
+    <script defer src="{{ url_for('static', filename='js/vendor/jquery.slicknav.min.js') }}"></script>
+    <script defer src="{{ url_for('static', filename='js/final.js') }}"></script>
+
+    <!-- Export libs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const jobId = "{{ job_id or '' }}";
+            if (!jobId) return;
+
+            const wrap = document.getElementById("buildProgress");
+            const bar = document.getElementById("buildBar");
+            const label = document.getElementById("buildLabel");
+            const sumSec = document.getElementById("summarySection");
+            const sumTxt = document.getElementById("summaryText");
+
+            if (wrap) wrap.style.display = "block";
+
+            const poll = setInterval(async () => {
+                try {
+                    const r = await fetch(`/progress/${jobId}`, { cache: "no-store" });
+                    const j = await r.json();
+
+                    const pct = Math.max(0, Math.min(100, j.pct || 0));
+                    if (bar) bar.style.width = pct + "%";
+                    if (label) label.textContent = `${j.phase || "Working"}… ${pct}%`;
+
+                    if (j.phase === "done") {
+                        clearInterval(poll);
+                        if (wrap) wrap.style.display = "none";
+
+                        // Show summary immediately without reload
+                        if (sumSec && sumTxt) {
+                            sumSec.style.display = "block";
+                            sumTxt.textContent = j.summary || "(no summary)";
+                        } else {
+                            // fallback: reload to let server put summary in session
+                            location.reload();
+                        }
+
+                        // optional: clear job id so future loads don't poll
+                        // fetch("/progress/" + jobId, { method: "DELETE" }).catch(()=>{});
+                    } else if (j.phase === "error") {
+                        clearInterval(poll);
+                        if (label) label.textContent = "Error: " + (j.error || "Unknown error");
+                    }
+                } catch (e) {
+                    // keep polling; transient fetch errors are okay
+                }
+            }, 1200);
+        });
+    </script>
+    -->
+</body>
+
+</html>

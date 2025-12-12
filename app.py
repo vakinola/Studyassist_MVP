@@ -1,5 +1,5 @@
 # app.py
-import os
+import os, os.path
 import re
 import uuid
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
@@ -13,7 +13,7 @@ from tempfile import SpooledTemporaryFile
 import time
 import logging
 from threading import Thread
-from time import sleep
+#from time import sleep
 from werkzeug.wrappers import Request as WerkzeugRequest
 from tempfile import SpooledTemporaryFile
 from flask.wrappers import Request as FlaskRequest
@@ -25,7 +25,6 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import CharacterTextSplitter
 from openai import OpenAI
 from dotenv import load_dotenv
-import os, os.path
 
 
 # load environment variables from .env for the OpenAI code
@@ -57,6 +56,7 @@ def allowed_file(filename: str) -> bool:
     """Check extension against the allowed set."""
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
 def extract_text_from_pdf(file_path: str) -> str:
     """Extract text from PDF pages (no OCR)."""
     try:
@@ -66,6 +66,7 @@ def extract_text_from_pdf(file_path: str) -> str:
     except Exception as e:
         return f"Error extracting text from PDF: {e}"
 
+
 def extract_text_from_docx(file_path: str) -> str:
     """Extract text from DOCX paragraphs."""
     try:
@@ -73,6 +74,7 @@ def extract_text_from_docx(file_path: str) -> str:
         return "\n".join([p.text for p in d.paragraphs if p.text.strip()])
     except Exception as e:
         return f"Error extracting text from DOCX: {e}"
+
 
 def process_uploaded_file(file_storage):
     """
@@ -113,6 +115,8 @@ def get_document_prompt(docs):
         text = d if isinstance(d, str) else getattr(d, "page_content", "")
         out.append(f"\nContent {i}:\n{text}\n")
     return "\n".join(out)
+
+
 
 def _on_rm_error(func, path, exc_info):
     """Windows-safe remover: make file writable then retry."""
@@ -182,7 +186,7 @@ def _process_job(job_id: str, text: str, persist_dir: str, filename: str, start_
         )
         summary_text = resp.choices[0].message.content
 
-        PROGRESS[job_id] = {"phase": "completed", "pct": scale(100), "summary": summary_text, "filename": filename,}
+        PROGRESS[job_id] = {"phase": "completed", "pct": scale(100), "summary": summary_text, "filename": filename, }
 
     except Exception as e:
         PROGRESS[job_id] = {"phase": "error", "pct": end_pct, "error": str(e)}
@@ -240,17 +244,18 @@ class StreamingRequest(FlaskRequest):
 app.request_class = StreamingRequest
 
 
-
 # ---------- Routes ----------
 @app.get("/")
 def index():
     #landing page for uploading document
     return render_template("index.html")
 
+
 # Home = just go to index (no clearing)
 @app.get("/home")
 def home():
     return redirect(url_for("index"))
+
 
 # Reset = clear session + delete last vector DB, then go home
 @app.post("/reset")
@@ -273,7 +278,7 @@ def generate():
         st = PROGRESS.get(job_id, {})
         phase = (st.get("phase") or "").lower()
         if phase == "completed" and st.get("summary"):
-            docs = session.get("docs",{})
+            docs = session.get("docs", {})
             filename = st.get("filename" or session.get("uploaded_filename"))
             # Save summary per document
             if filename:
@@ -300,6 +305,7 @@ def generate():
         job_id=job_id,  # will be None if finished
     )
 
+
 #This is for clicking a checkbox and instantly seeing that file’s summary.
 @app.get("/summary")
 def get_summary():
@@ -309,12 +315,14 @@ def get_summary():
     summary = info.get("summary")
     return jsonify({"ok": True, "summary": summary or ""})
 
+
 #Used to syle the summary
 @app.template_filter("markdown_bold")
 def markdown_bold(s):
     if not isinstance(s, str):
         return s
     return re.sub(r"\*\*(.*?)\*\*", r"<strong>\1</strong>", s)
+
 
 @app.template_filter("nl2br")
 def nl2br(s):
@@ -346,7 +354,6 @@ def progress_update():
     PROGRESS[job_id]["pct"] = mapped
     return ("", 204)
 
-
 @app.post("/upload")
 def upload():
     # Expect the pre-created job_id
@@ -356,7 +363,6 @@ def upload():
         job_id = uuid.uuid4().hex
         PROGRESS[job_id] = {"phase": "Uploading", "pct": 0}
         session["job_id"] = job_id
-
 
     if "file" not in request.files:
         flash("No file part in request.", "error")
@@ -416,7 +422,6 @@ def get_progress(job_id):
     return jsonify(st)
 
 
-
 @app.route("/ask", methods=["POST"])
 def ask():
     data = request.get_json(silent=True) or {}
@@ -459,7 +464,7 @@ def ask():
     )
     answer = resp.choices[0].message.content
     return jsonify({"ok": True, "answer": answer})
-    
+
 
 #Generate multiple-choice questions from the vector DB.
 @app.route("/generate_quiz", methods=["POST"])
@@ -519,5 +524,15 @@ def generate_quiz():
 
     return jsonify({"ok": True, "quiz": quiz})
 
+@app.route("/results")
+def results():
+    return render_template("results.html")
+
+#if __name__ == "__main__":
+#    app.run(debug=True)
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    import os
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
+

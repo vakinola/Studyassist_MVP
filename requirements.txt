@@ -7,3 +7,4 @@ langchain-openai
 chromadb
 langchain-chroma
 langchain-text-splitters
+gunicorn

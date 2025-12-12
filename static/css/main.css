@@ -1,5 +1,3 @@
-
-
 @import url("https://fonts.googleapis.com/css?family=Poppins:400,600,700");
 
 
@@ -11,6 +9,7 @@
   padding: 0;
   margin: 0;
 }
+
 body {
   background-color: #fff;
   font-family: "Poppins", sans-serif;
@@ -22,6 +21,7 @@ body {
   position: relative;
   overflow-x: hidden;
 }
+
 h1,
 h2,
 h3,
@@ -32,6 +32,7 @@ h6 {
   -webkit-font-smoothing: antialiased;
   color: #222;
 }
+
 h1 {
   font-size: 52px;
   font-weight: 600;
@@ -40,6 +41,7 @@ h1 {
   color: #222;
   letter-spacing: -3px;
 }
+
 h2 {
   color: #333;
   margin: 0 0 25px;
@@ -48,6 +50,7 @@ h2 {
   letter-spacing: -1.5px;
   text-transform: uppercase;
 }
+
 h3,
 h4 {
   margin: 0 0 10px;
@@ -56,25 +59,30 @@ h4 {
   color: #222;
   letter-spacing: -0.025rem;
 }
+
 h3 {
   font-size: 20px;
   font-weight: 600;
   letter-spacing: -0.025rem;
   line-height: 1.2;
 }
+
 h4 {
   font-size: 16px;
 }
+
 h5,
 h6 {
   font-size: 14px;
   margin: 0 0 10px;
 }
+
 img {
   border: none;
   outline: none;
   max-width: 100%;
 }
+
 ul {
   display: block;
   list-style: none;
@@ -87,14 +95,17 @@ p {
   color: #666;
   margin-bottom: 15px;
 }
+
 a,
 a:hover {
   text-decoration: none;
 }
+
 a:focus {
   outline: 0;
   text-decoration: none;
 }
+
 input::-webkit-input-placeholder {
   color: #555 !important;
 }
@@ -109,9 +120,10 @@ input::-moz-placeholder {
   color: #555 !important;
 }
 
-input:-ms-input-placeholder{
+input:-ms-input-placeholder {
   color: #555 !important;
 }
+
 button {
   border: none;
   background: none;
@@ -135,6 +147,7 @@ button {
   -moz-transition: all 0.5s 0.5s ease;
   transition: all 0.5s 0.2s ease;
 }
+
 .loader {
   position: absolute;
   top: 50%;
@@ -146,10 +159,12 @@ button {
   margin: auto;
   margin-top: -30px;
 }
+
 body.loaded #preloader {
   opacity: 0;
   visibility: hidden;
 }
+
 /*Battery*/
 .battery {
   width: 28px;
@@ -163,6 +178,7 @@ body.loaded #preloader {
   top: 40px;
   margin: 0 auto;
 }
+
 .battery:after {
   width: 2px;
   height: 7px;
@@ -173,26 +189,32 @@ body.loaded #preloader {
   top: 2px;
   right: -4px;
 }
+
 @-webkit-keyframes charge {
   0% {
     box-shadow: inset 0px 0px 0px #fff;
   }
+
   100% {
     box-shadow: inset 30px 0px 0px #fff;
   }
 }
+
 @-moz-keyframes charge {
   0% {
     box-shadow: inset 0px 0px 0px #fff;
   }
+
   100% {
     box-shadow: inset 30px 0px 0px #fff;
   }
 }
+
 @keyframes charge {
   0% {
     box-shadow: inset 0px 0px 0px #fff;
   }
+
   100% {
     box-shadow: inset 30px 0px 0px #fff;
   }
@@ -207,34 +229,36 @@ img {
   -o-transition: all 0.5s;
   transition: all 0.5s;
 }
+
 /* ==========================================================================
    Header Section
    ========================================================================== */
 .header-section {
-  background-color:transparent;
-  width:100%;
-  height:80px;
-  z-index:999;
-  position:fixed;
-  left:0;
-  top:0;
-  padding:10px 0;
-  transition:all .3s ease-in-out;
+  background-color: transparent;
+  width: 100%;
+  height: 80px;
+  z-index: 999;
+  position: fixed;
+  left: 0;
+  top: 0;
+  padding: 10px 0;
+  transition: all .3s ease-in-out;
 }
 
 
 .navbar {
-  border:none;
-  border-radius:0;
-  margin:0;
-  position:relative;
-  padding:0;
+  border: none;
+  border-radius: 0;
+  margin: 0;
+  position: relative;
+  padding: 0;
 }
 
 
 .navbar-header {
   padding: 17px 0;
 }
+
 .navbar-header .brand {
   font-size: 25px;
   color: #333;
@@ -256,9 +280,11 @@ img {
   font-weight: 600;
   margin-left: 13px;
 }
+
 .brand-icon {
   flex: 0 0 36px;
 }
+
 .brand-text {
   font-weight: 700;
   font-size: 1.05rem;
@@ -271,7 +297,7 @@ img {
   padding: 0 15px;
 }
 
-ul.nav > li > a {
+ul.nav>li>a {
   color: rgba(255, 255, 255, 0.9);
   font-family: "Poppins", sans-serif;
   display: inline-block;
@@ -284,9 +310,10 @@ ul.nav > li > a {
   line-height: 70px;
   z-index: 1;
 }
-ul.nav > li > a:hover,
-ul.nav > li > a:focus,
-ul.nav > li > a.active {
+
+ul.nav>li>a:hover,
+ul.nav>li>a:focus,
+ul.nav>li>a.active {
   background: none;
   color: #fff;
   opacity: 1;
@@ -297,6 +324,7 @@ ul.nav > li > a.active {
 .menu-wrap {
   position: relative;
 }
+
 .slicknav_menu {
   background: none;
   padding: 4px 0;
@@ -306,13 +334,16 @@ ul.nav > li > a.active {
   right: 0;
   top: 70px;
 }
+
 .slicknav_nav {
   background-color: #fff;
 }
+
 .slicknav_btn {
   background-color: transparent;
   margin: -53px 5px 19px;
 }
+
 .slicknav_nav .slicknav_row:hover,
 .slicknav_nav .slicknav_row,
 .slicknav_nav a,
@@ -322,6 +353,7 @@ ul.nav > li > a.active {
   -o-border-radius: 0;
   border-radius: 0;
 }
+
 .slicknav_nav .slicknav_row,
 .slicknav_nav a {
   padding: 10px 15px;
@@ -332,10 +364,12 @@ ul.nav > li > a.active {
 .slicknav_nav ul {
   margin: 0;
 }
+
 .slicknav_nav ul li a {
   padding-left: 30px;
   font-size: 12px;
 }
+
 .slicknav_nav .slicknav_row:hover,
 .slicknav_nav a:hover {
   background-color: transparent;
@@ -356,6 +390,7 @@ ul.nav > li > a.active {
   position: relative;
   z-index: 1;
 }
+
 .hero-section:before {
   background-image: url(../img/hero-wave.png);
   background-position: top right;
@@ -370,19 +405,25 @@ ul.nav > li > a.active {
   top: -160px;
   z-index: -1;
 }
+
 .hero-content h2 {
   margin-bottom: 20px;
 }
+
 .hero-content p {
   line-height: 1.5;
   margin: 0 0 25px;
 }
+
 .hero-content .download-btn:hover {
   opacity: 0.8;
-} /*  */
+}
+
+/*  */
 .hero-inner {
   position: relative;
 }
+
 .hero-moc {
   background-image: url(../img/hero-mockup.png);
   background-position: inherit;
@@ -408,29 +449,35 @@ ul.nav > li > a.active {
 
 
 .custom-upload-button {
-    background-color: #ff7a00;
-    color: white;
-    padding: 20px 25px;
-    border-radius: 10px;
-    font-weight: 800;
-    font-size: 16px;
-    cursor: pointer;
-    display: inline-block;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    transition: background-color 0.2s;
-    margin: 0 auto 10px auto;
+  background-color: #ff7a00;
+  color: white;
+  padding: 20px 25px;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 16px;
+  cursor: pointer;
+  display: inline-block;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.2s;
+  margin: 0 auto 10px auto;
 }
 
 /* 3. Hide the Native File Input */
 .custom-file-input-wrapper input[type="file"] {
-    /* Completely hide the default input element */
-    width: 0.1px;
-    height: 0.1px;
-    opacity: 0;
-    overflow: hidden;
-    position: absolute;
-    z-index: -1;
+  /* Completely hide the default input element */
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  position: absolute;
+  z-index: -1;
 }
+
+.selectedFileName {
+  word-break: break-word;
+}
+
+
 
 
 /*Mockup Animation*/
@@ -439,24 +486,29 @@ ul.nav > li > a.active {
     -webkit-transform: translateY(-20px);
     transform: translateY(-20px);
   }
+
   50% {
     -webkit-transform: translateY(-10px);
     transform: translateY(-10px);
   }
+
   100% {
     -webkit-transform: translateY(-25px);
     transform: translateY(-25px);
   }
 }
+
 @keyframes mock-animation {
   0% {
     -webkit-transform: translateY(-20px);
     transform: translateY(-20px);
   }
+
   50% {
     -webkit-transform: translateY(-10px);
     transform: translateY(-10px);
   }
+
   100% {
     -webkit-transform: translateY(-20px);
     transform: translateY(-20px);
@@ -465,23 +517,23 @@ ul.nav > li > a.active {
 
 /*==================== media query for mobile =======================*/
 @media (max-width: 992px) {
-    .hero-moc {
-        display: block !important;
-        width: 275px;
-        right: 0px !important;
-    }
+  .hero-moc {
+    display: block !important;
+    width: 275px;
+    right: 0px !important;
+  }
 
-    .navbar{
+  .navbar {
     right: 85px !important;
   }
+}
+
+@media (max-width: 767px) {
+  .hero-section {
+    height: 100%;
+    padding-top: 20em;
+    text-align: center;
   }
-  
-  @media (max-width: 767px) {
-    .hero-section {
-      height: 100%;
-      padding-top: 20em;
-      text-align: center;
-    }
 
 
   .header-section {
@@ -515,22 +567,24 @@ ul.nav > li > a.active {
 
 @media (max-width: 525px) {
 
-    .hero-section:before {
-      height: 100%;
-        right: 0px;
-        top: -180px !important;
-        z-index: -1;
-    }
-        .hero-moc {
-        display: block !important;
-        width: 180px;
-        right: 30% !important;
-        bottom: 70px;
-        height: 300px;
-    }
-    .footer-section {
-      bottom: 23em;
-    }
+  .hero-section:before {
+    height: 100%;
+    right: 0px;
+    top: -180px !important;
+    z-index: -1;
+  }
+
+  .hero-moc {
+    display: block !important;
+    width: 180px;
+    right: 30% !important;
+    bottom: 70px;
+    height: 300px;
+  }
+
+  .footer-section {
+    bottom: 23em;
+  }
 }
 
 
@@ -548,6 +602,7 @@ ul.nav > li > a.active {
   width: 100%;
   z-index: 999;
 }
+
 .footer-section p {
   color: #555;
   font-size: 14px;
@@ -559,7 +614,8 @@ ul.nav > li > a.active {
    ========================================================================== */
 
 
-.mybutton:hover, .custom-upload-button:hover {
+.mybutton:hover,
+.custom-upload-button:hover {
   background-color: #15408a;
   transition: all 0.5s;
   color: white;
@@ -571,182 +627,240 @@ ul.nav > li > a.active {
 
 
 @media (max-width: 1170px) {
-    .swiper-container{
-        width: 70%;
-    }
-    .download-mockup{
-        right: -250px;
-    }
+  .swiper-container {
+    width: 70%;
+  }
+
+  .download-mockup {
+    right: -250px;
+  }
 }
 
 @media (max-width: 1024px) {
-    .hero-moc{
-        right: -8px;
-    }
-    .hero-section{
-        height: 650px;
-    }
-    h2{
-        font-size: 24px;
-    }
+  .hero-moc {
+    right: -8px;
+  }
+
+  .hero-section {
+    height: 650px;
+  }
+
+  h2 {
+    font-size: 24px;
+  }
 }
 
 /* ---- Start of max-width 992px CSS ---- */
 @media (max-width: 992px) {
-    .sm-padding{ padding: 15px; }
-    .feature_list,
-    .about_content {
-        padding: 0;
-    } 
-    .hero_mockup{
-        background-position: 120% center;
-    }
-    .hero-section:before{
-        top: -308px;
-        height: 100%;
-    }
-    ul.nav > li > a {
-        padding: 0 5px;
-        font-size: 10px;
-    }
-    .hero-moc{
-        display: none;
-    }
-    .swiper-container{
-        width: 260px;
-    }
-    .swiper-container .swiper-slide{ text-align: center; }
-    .swiper-container .swiper-slide img,
-    .swiper-container .swiper-slide-active img{ width: 80%!important; }
-    .swiper-container .swiper-next, 
-    .swiper-container .swiper-prev{ display: none; }
-    .content-info{
-        padding-bottom: 65px;
-        padding-top: 0;
-    }
-    .download-mockup{
-        display: none;
-    }
-    .download-btn a{
-        margin: 0 5px;
-    }
-    .download-content h2{
-        font-size: 24px;
-    }
-    .download-content{
-        padding: 0;
-    }
-    .hero-section{
-        height: 570px;
-    }
+  .sm-padding {
+    padding: 15px;
+  }
+
+  .feature_list,
+  .about_content {
+    padding: 0;
+  }
+
+  .hero_mockup {
+    background-position: 120% center;
+  }
+
+  .hero-section:before {
+    top: -308px;
+    height: 100%;
+  }
+
+  ul.nav>li>a {
+    padding: 0 5px;
+    font-size: 10px;
+  }
+
+  .hero-moc {
+    display: none;
+  }
+
+  .swiper-container {
+    width: 260px;
+  }
+
+  .swiper-container .swiper-slide {
+    text-align: center;
+  }
+
+  .swiper-container .swiper-slide img,
+  .swiper-container .swiper-slide-active img {
+    width: 80% !important;
+  }
+
+  .swiper-container .swiper-next,
+  .swiper-container .swiper-prev {
+    display: none;
+  }
+
+  .content-info {
+    padding-bottom: 65px;
+    padding-top: 0;
+  }
+
+  .download-mockup {
+    display: none;
+  }
+
+  .download-btn a {
+    margin: 0 5px;
+  }
+
+  .download-content h2 {
+    font-size: 24px;
+  }
+
+  .download-content {
+    padding: 0;
+  }
+
+  .hero-section {
+    height: 570px;
+  }
 
 }
+
 /* ---- End of max-width 992px CSS ---- */
 
 
 /* ---- Start of min-width 480px and max-width 768px CSS ---- */
-@media all and (min-width: 480px) and (max-width: 768px) {
-  
-	
-}
+@media all and (min-width: 480px) and (max-width: 768px) {}
+
 /* ---- End of min-width 480px and max-width 768px CSS ---- */
 
 
 /* ---- Start of max-width 767px CSS ---- */
 @media all and (max-width: 767px) {
-    body, p{
-        font-size: 14px;
-        line-height: 24px;
-    }
-    h1{
-        font-size: 30px!important;
-    }
-    h2{
-        font-size: 24px;
-    }
-    h3{
-        font-size: 20px;
-    }
-    .play-btn:before,
-    .mock-hide,
-    p br{
-        display: none;
-    }
-    .padding{
-        padding: 70px 0;
-    }
-    .promo-section{ padding-top: 0; }
-    .xs-padding{
-    	padding: 15px;
-    }
-    .section-heading h2{
-        font-size: 30px;
-    }
-    .section-heading p{
-        font-size: 16px;
-    }
-    .navbar-brand{
-        padding: 20px 0;
-    }
-    .menu-btn,
-    .menu-wrap ul.nav{
-        display: none;
-    }
-    .slicknav_menu {
-        display:block;
-    }
-    .hero-inner{
-        padding-top: 50px;
-    }
-    .play-btn {
-        left: calc(50% - 30px);
-        top: calc(50% - 30px);
-    }
-    .content-info{
-        padding-bottom: 0;
-    }
-    .download-content{
-        text-align: center;
-    }
+
+  body,
+  p {
+    font-size: 14px;
+    line-height: 24px;
+  }
+
+  h1 {
+    font-size: 30px !important;
+  }
+
+  h2 {
+    font-size: 24px;
+  }
+
+  h3 {
+    font-size: 20px;
+  }
+
+  .play-btn:before,
+  .mock-hide,
+  p br {
+    display: none;
+  }
+
+  .padding {
+    padding: 70px 0;
+  }
+
+  .promo-section {
+    padding-top: 0;
+  }
+
+  .xs-padding {
+    padding: 15px;
+  }
+
+  .section-heading h2 {
+    font-size: 30px;
+  }
+
+  .section-heading p {
+    font-size: 16px;
+  }
+
+  .navbar-brand {
+    padding: 20px 0;
+  }
+
+  .menu-btn,
+  .menu-wrap ul.nav {
+    display: none;
+  }
+
+  .slicknav_menu {
+    display: block;
+  }
+
+  .hero-inner {
+    padding-top: 50px;
+  }
+
+  .play-btn {
+    left: calc(50% - 30px);
+    top: calc(50% - 30px);
+  }
+
+  .content-info {
+    padding-bottom: 0;
+  }
+
+  .download-content {
+    text-align: center;
+  }
 }
+
 /* ---- End of max-width 767px CSS ---- */
 
 
 /* ---- Start of max-width 520px CSS ---- */
 @media all and (max-width: 520px) {
-    .hero-section{
-        height: 460px;
-    }
-    .hero-content p{ font-size: 16px; }
-    .subscribe-form{ width: 100%; }
-    .download-content h2{
-        font-size: 30px;
-    }
-    .download-content p{ margin-bottom: 25px; }
-    .download-btn a:first-child{
-        margin-bottom: 10px;
-    }
+  .hero-section {
+    height: 460px;
+  }
+
+  .hero-content p {
+    font-size: 16px;
+  }
+
+  .subscribe-form {
+    width: 100%;
+  }
+
+  .download-content h2 {
+    font-size: 30px;
+  }
+
+  .download-content p {
+    margin-bottom: 25px;
+  }
+
+  .download-btn a:first-child {
+    margin-bottom: 10px;
+  }
 
 
 }
+
 /* ---- End of max-width 520px CSS ---- */
 
 
 /* ---- Start of max-width 420px CSS ---- */
 @media all and (max-width: 420px) {
 
-    .navbar {
-        right: 0px !important;
-    }
-    
+  .navbar {
+    right: 0px !important;
+  }
+
 }
+
 /* ---- End of max-width 420px CSS ---- */
 
 
 /* ---- Start of max-width 380px CSS ---- */
-@media all and (max-width: 380px) {
-	
-}
+@media all and (max-width: 380px) {}
+
 /* ---- End of max-width 380px CSS ---- */
 
 /* ==========================================================================
