@@ -95,39 +95,7 @@
                     <tr>
                         <th>Uploaded File</th>
                         <th>Score</th>
-                        <th>Date & Time</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Math_Notes_Chapter1.pdf</td>
-                        <td class="score">85%</td>
-                        <td>2025-11-29 10:30 AM</td>
-                    </tr>
-                    <tr>
-                        <td>Physics_Revision.docx</td>
-                        <td class="score">92%</td>
-                        <td>2025-11-28 03:15 PM</td>
-                    </tr>
-                    <tr>
-                        <td>Chemistry_Exercises.xlsx</td>
-                        <td class="score">78%</td>
-                        <td>2025-11-27 09:45 AM</td>
-                    </tr>
-                    <tr>
-                        <td>Biology_LectureNotes.pdf</td>
-                        <td class="score">88%</td>
-                        <td>2025-11-26 02:00 PM</td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <!--
-            <table>
-                <thead>
-                    <tr>
-                        <th>Uploaded File</th>
-                        <th>Score</th>
+                        <th>Percentage</th>
                         <th>Date & Time</th>
                     </tr>
                 </thead>
@@ -135,15 +103,13 @@
                     {% for result in results %}
                     <tr>
                         <td>{{ result.filename }}</td>
-                        <td class="score">{{ result.score }}%</td>
+                        <td class="score">{{ result.correct }}/{{ result.total }}</td>
+                         <td class="score">{{ result.percent }}%</td>
                         <td>{{ result.test_datetime }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
-
-            -->
-
 
             <footer>© 2025 StudyAssists | All rights reserved</footer>
         </main>

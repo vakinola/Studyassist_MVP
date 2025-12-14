@@ -11,9 +11,10 @@ import stat
 import math
 from tempfile import SpooledTemporaryFile
 import time
+import random
 import logging
 from threading import Thread
-#from time import sleep
+from datetime import datetime
 from werkzeug.wrappers import Request as WerkzeugRequest
 from tempfile import SpooledTemporaryFile
 from flask.wrappers import Request as FlaskRequest
@@ -175,7 +176,7 @@ def _process_job(job_id: str, text: str, persist_dir: str, filename: str, start_
             "Title: at the beginning of the notebook title"
             "Then add two newline characters (\\n\\n).\n"
             "After that, write the rest of the summary"
-            "The summary should never be move that 8 sentences"
+            "The summary should never be more that 3 sentences"
             "Be precise, avoid opinions, and summarize the main points in a clear and structured way. "
             "If the document has multiple sections, break it into meaningful segments."
         )
@@ -257,20 +258,50 @@ def home():
     return redirect(url_for("index"))
 
 
-# Reset = clear session + delete last vector DB, then go home
-@app.post("/reset")
-def reset():
-    persist_dir = session.get("persist_directory")
+
+@app.post("/delete_doc")
+def delete_doc():
+    # Accept JSON (from fetch) and also allow form (fallback)
+    data = request.get_json(silent=True) or {}
+    filename = data.get("filename") or request.form.get("filename")
+
+    if not filename:
+        return jsonify(ok=False, error="Please select a document to delete."), 400
+
+    docs = session.get("docs", {})
+
+    if filename not in docs:
+        return jsonify(ok=False, error="Selected document not found."), 404
+
+    persist_dir = docs[filename].get("persist_dir")
+
+    # Delete ONLY the Chroma DB folder
     if persist_dir and os.path.isdir(persist_dir):
         try:
             shutil.rmtree(persist_dir, onerror=_on_rm_error)
         except Exception as e:
             app.logger.warning("Failed to remove persist dir %s: %s", persist_dir, e)
-    session.clear()
-    flash("Reset completed. Upload a new file to start.", "success")
-    return redirect(url_for("generate"))
+            return jsonify(ok=False, error="Failed to delete database."), 500
+
+    # Remove from session
+    docs.pop(filename, None)
+    session["docs"] = docs
+
+    # Clear active doc if it was the deleted one
+    if session.get("uploaded_filename") == filename:
+        session.pop("uploaded_filename", None)
+        session.pop("summary_text", None)
+        session.pop("persist_directory", None)
+
+    flash(f"Deleted '{filename}' successfully.", "success")
+
+    return jsonify(ok=True)
 
 
+
+
+
+#generate questions
 @app.get("/generate")
 def generate():
     job_id = session.get("job_id")
@@ -485,8 +516,10 @@ def generate_quiz():
     vectordb = Chroma(embedding_function=embeddings, persist_directory=persist_dir)
 
     raw = vectordb.get(include=["documents"])
+    # Use at least 20 documents selection when available
     all_docs = raw.get("documents", [])
-    sample = all_docs[:20] if all_docs else []
+    num_samples = min(20, len(all_docs)) if all_docs else 0
+    sample = random.sample(all_docs, num_samples) if num_samples > 0 else []
     context = get_document_prompt(sample) if sample else "No content available."
 
     system_message = (
@@ -524,9 +557,38 @@ def generate_quiz():
 
     return jsonify({"ok": True, "quiz": quiz})
 
-@app.route("/results")
+#for saving results
+@app.post("/save_result")
+def save_result():
+    data = request.get_json(silent=True) or {}
+    filename = data.get("filename")
+    correct = data.get("correct")
+    total = data.get("total")
+    percent = data.get("percent")
+
+    if not filename or correct is None or total is None:
+        return jsonify(ok=False, error="Missing result data"), 400
+
+    results = session.get("results", [])
+    results.insert(0, {
+        "filename": filename,
+        "correct": int(correct),
+        "total": int(total),
+        "percent": int(percent) if percent is not None else round((int(correct)/int(total))*100),
+        "test_datetime": datetime.now().strftime("%Y-%m-%d %I:%M %p")
+    })
+    session["results"] = results
+    return jsonify(ok=True)
+
+
+#results page route
+@app.get("/results")
 def results():
-    return render_template("results.html")
+    return render_template(
+        "results.html",
+        results=session.get("results", [])
+    )
+
 
 #if __name__ == "__main__":
 #    app.run(debug=True)

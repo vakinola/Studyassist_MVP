@@ -5,6 +5,29 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- Small helpers ---
   const $ = (id) => document.getElementById(id);
   const statusEl = $("opStatus");
+  console.log("final.js loaded ✅");
+  console.log("delete button found:", !!document.getElementById("deleteDocBtn"));
+
+  function showAlert(message, type = "success", timeout = 4000) {
+  const container = document.getElementById("alertContainer");
+  if (!container) return;
+
+  container.innerHTML = `
+    <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  `;
+
+  if (timeout) {
+    setTimeout(() => {
+      const alert = container.querySelector(".alert");
+      alert?.classList.remove("show");
+      alert?.classList.add("fade");
+      setTimeout(() => alert?.remove(), 300);
+    }, timeout);
+  }
+}
 
   async function postJSON(url, bodyObj) {
     const resp = await fetch(url, {
@@ -52,6 +75,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // 1️⃣ Range slider update
   // ==============================
   function updateRangeValue() {
+    if (!quizRange || !rangeValue) return;
+
     const value = parseInt(quizRange.value);
     const min = parseInt(quizRange.min);
     const max = parseInt(quizRange.max);
@@ -74,7 +99,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // ==============================
   // 2️⃣ File handling + preview + list
   // ==============================
-  let uploadedFiles = [];
+  //let uploadedFiles = [];
 
   if (browseBtn && fileInput) {
     browseBtn.addEventListener("click", () => fileInput.click());
@@ -101,7 +126,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
 
-  function renderFileList() {
+  /*function renderFileList() {
     if (!fileList) return;
     fileList.innerHTML = "";
     uploadedFiles.forEach((file, index) => {
@@ -138,7 +163,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (li) deleteFile(parseInt(li.dataset.index));
       });
     });
-  }
+  } */
 
   // ==============================
   // 3️⃣ Ask question handler
@@ -199,6 +224,44 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+
+  //################################################################
+  //handler for delete document
+  //################################################################
+  const deleteDocBtn = document.getElementById("deleteDocBtn");
+  deleteDocBtn?.addEventListener("click", async () => {
+    const filename = getSelectedDocName();
+    if (!filename) {
+      showAlert("Please select a document to delete.", "danger");
+      return;
+    }
+
+    if (!confirm(`Delete "${filename}" and its database?`)) return;
+
+    try {
+      const resp = await fetch("/delete_doc", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename })
+      });
+      const data = await resp.json();
+      if (!resp.ok || data.ok === false) {
+        throw new Error(data.error || "Delete failed");
+      }
+      
+      // ✅ Green success alert
+      showAlert(data.message || "Document deleted successfully.", "success");
+
+      // Refresh after short delay so user sees alert
+      setTimeout(() => location.reload(), 1200);
+
+    } catch (e) {
+      showAlert(e.message, "danger");
+    }
+  });
+
+
+
   // ------------------------------------
   // Handle upload with real progress (0–40%)
   // ------------------------------------
@@ -210,17 +273,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const uploadForm = document.getElementById("uploadForm");
   if (uploadForm) {
     uploadForm.addEventListener("submit", async (e) => {
-      // Identify which button submitted the form
-      const submitter = e.submitter || document.activeElement;
-      const formaction = submitter?.getAttribute?.("formaction") || "";
-      const isReset = formaction.includes("/reset");
-
-      // If it's the Reset button, allow normal form submit to /reset
-      if (isReset) {
-        return; // don't preventDefault; let the browser post to /reset
-      }
-
-      // Otherwise, handle the Upload via AJAX
       e.preventDefault();
 
       const fileInput = document.getElementById("fileInput");
@@ -384,7 +436,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Require all answered
     const unanswered = answers.filter(a => !a.selected).map(a => a.idx + 1);
     if (unanswered.length) {
-      if (quizWarning) quizWarning.textContent = "Please answer all Questions before submitting";
+      if (quizWarning) quizWarning.textContent = "⛔Please answer all Questions before submitting";
       if (quizResults) quizResults.innerHTML = '';
       if (quizStatus) quizStatus.textContent = "";
       return; // ⛔ do not reveal anything yet
@@ -428,6 +480,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Calculate score
     const pct = Math.round((correctCount / total) * 100);
+    // Save result to server
+    const filename = getSelectedDocName();
+    if (filename) {
+      fetch("/save_result", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filename: filename,
+          correct: correctCount,
+          total: total,
+          percent: pct
+        })
+      }).catch(() => {
+        // fail silently – quiz UI still works
+      });
+    }
+
 
     // Show overall score
     if (quizResults) {
@@ -602,7 +671,6 @@ document.addEventListener("DOMContentLoaded", () => {
       let html = (data.summary || "(No summary stored yet for this document.)")
         .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
         .replace(/\n/g, "<br>");
-
       sumTxt.innerHTML = html;
     } catch (e) {
       sumTxt.textContent = "Could not load summary.";
