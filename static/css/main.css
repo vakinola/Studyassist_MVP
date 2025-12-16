@@ -870,3 +870,15 @@ ul.nav>li>a.active {
 .summary-design {
   white-space: pre-wrap;
 }
+
+
+/* ==========================================================================
+  Nav bar contd
+   ========================================================================== */
+
+.container-test {
+  width: 95%;
+  margin-right: auto;
+  margin-left: auto;
+
+}

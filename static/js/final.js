@@ -2,6 +2,13 @@
 document.addEventListener("DOMContentLoaded", () => {
   "use strict";
 
+  document.querySelectorAll(".flash").forEach((flash) => {
+    setTimeout(() => {
+      flash.style.opacity = "0";
+      setTimeout(() => flash.remove(), 400); // match CSS transition
+    }, 8000);
+  });
+
   // --- Small helpers ---
   const $ = (id) => document.getElementById(id);
   const statusEl = $("opStatus");
@@ -9,25 +16,25 @@ document.addEventListener("DOMContentLoaded", () => {
   console.log("delete button found:", !!document.getElementById("deleteDocBtn"));
 
   function showAlert(message, type = "success", timeout = 4000) {
-  const container = document.getElementById("alertContainer");
-  if (!container) return;
+    const container = document.getElementById("alertContainer");
+    if (!container) return;
 
-  container.innerHTML = `
+    container.innerHTML = `
     <div class="alert alert-${type} alert-dismissible fade show" role="alert">
       ${message}
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
   `;
 
-  if (timeout) {
-    setTimeout(() => {
-      const alert = container.querySelector(".alert");
-      alert?.classList.remove("show");
-      alert?.classList.add("fade");
-      setTimeout(() => alert?.remove(), 300);
-    }, timeout);
+    if (timeout) {
+      setTimeout(() => {
+        const alert = container.querySelector(".alert");
+        alert?.classList.remove("show");
+        alert?.classList.add("fade");
+        setTimeout(() => alert?.remove(), 300);
+      }, timeout);
+    }
   }
-}
 
   async function postJSON(url, bodyObj) {
     const resp = await fetch(url, {
@@ -248,7 +255,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!resp.ok || data.ok === false) {
         throw new Error(data.error || "Delete failed");
       }
-      
+
       // ✅ Green success alert
       showAlert(data.message || "Document deleted successfully.", "success");
 
@@ -512,6 +519,12 @@ document.addEventListener("DOMContentLoaded", () => {
           Your Score: <strong>${correctCount}/${total}</strong> (${pct}%)
         </div>
       `;
+
+      // Show the "View Scores" button
+      const viewBtn = document.getElementById("viewScoresBtn");
+      if (viewBtn) {
+        viewBtn.classList.remove("result-hidden");
+      }
     }
     if (quizStatus) quizStatus.textContent = '✅ Graded.';
 
@@ -524,7 +537,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function attachExportButtons() {
     if (!exportDiv) return;
     exportDiv.innerHTML = `
-      <h6 class="mt-4">📤 Export Options</h6>
+      <h6 class="mt-2">📤 Export Options</h6>
       <button id="exportCsvBtn" class="btn btn-outline-secondary me-2 mybutton">Export CSV</button>
       <button id="exportPdfBtn" class="btn btn-outline-secondary mybutton">Export PDF</button>
     `;

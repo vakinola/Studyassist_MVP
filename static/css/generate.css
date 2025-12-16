@@ -416,7 +416,7 @@ ul li {
   flex: 1;
   background: #fff;
   color: #2c65d1;
-  padding: 30px;
+  padding: 4px 30px 30px 30px;
   overflow-y: auto;
   position: relative;
 }
@@ -480,6 +480,7 @@ span#rangeValue {
 
 .features h2 {
   color: rgba(0, 0, 0, 0.8);
+  margin-top: 10px;
 }
 
 .summary-design,
@@ -499,7 +500,16 @@ span#rangeValue {
 #answerText {
   white-space: pre-wrap;
   background-color: rgb(248, 249, 250, 0.8);
+  margin-bottom: 15px;
 
+}
+
+.result-hidden {
+  display: none;
+}
+
+#viewScoresBtn {
+  margin-top: 10px;
 }
 
 textarea {
@@ -719,8 +729,12 @@ footer {
 
   .mobile-toggle {
     font-size: 22px;
-    color: white;
+
     cursor: pointer;
+  }
+
+  .content-wrapper {
+    padding: 0 15px;
   }
 
   /* Optional overlay blur effect */
@@ -728,7 +742,7 @@ footer {
     content: "";
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.2);
+    background: white;
     backdrop-filter: blur(3px);
     z-index: -1;
   }
@@ -950,4 +964,8 @@ footer {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.main {
+  min-height: 100vh;
 }
