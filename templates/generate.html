@@ -11,6 +11,7 @@
 
   <!-- Page CSS -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/generate.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/font-awesome.min.css') }}" />
 </head>
 
@@ -65,7 +66,7 @@
 
               <p id="selectedFileName" class="text-muted mt-2"></p>
 
-              <p class="small-text">Supported files: PDF, DOCX, TXT</p>
+              <p class="small-text">Supported files: .pdf, .docx, .txt</p>
             </div>
 
             <!--added for the display of progress bar -->
@@ -80,15 +81,9 @@
               <button id="uploadBtn" class="btn btn-primary flex-fill mybutton" type="submit">Upload</button>
             </div>
 
-            <!--added for the display of progress bar -->
-            <div id="buildProgress" class="mt-3" style="display:none;">
-              <div class="progress" style="height:10px;">
-                <div id="buildBar" class="progress-bar" role="progressbar" style="width:0%;"></div>
-              </div>
-              <small id="buildLabel" class="text-muted d-block mt-1">Starting…</small>
-            </div>
 
-            <div class="mt-3">
+            <div id="uploadedFilesContainer"
+              style="display: {% if session.get('docs') %}block{% else %}none{% endif %};">
               <h3 class="h6 mb-2">Uploaded files</h3>
               <ul id="fileList" class="doc-list">
                 {% set docs = session.get('docs') %}
@@ -100,10 +95,6 @@
                     <input type="checkbox" class="doc-select" name="filename" value="{{ fn }}">
                     <div class="doc-main">
                       <div class="doc-name">{{ fn }}</div>
-                      <!-- <div class="doc-meta">
-                        <span class="doc-type">{{ ext }}</span>
-                      </div>
-                    -->
                     </div>
                   </label>
                 </li>
@@ -113,12 +104,13 @@
                 {% endif %}
               </ul>
 
-              <!-- Delete: Deletes the document including its database-->
               <button id="deleteDocBtn" type="button" class="btn btn-outline-secondary flex-fill mybutton deletebtn">
                 Delete
               </button>
             </div>
+
           </form>
+
         </div>
       </div>
 
@@ -238,7 +230,7 @@
 
           <div id="quizResults" class="mt-2" aria-live="polite" role="status"></div>
 
-          <button id="viewScoresBtn" class="result-hidden mybutton mt-2" onclick="window.location.href='/scores'">
+          <button id="viewScoresBtn" class="result-hidden mybutton mt-2" onclick="window.location.href='/results'">
             View My Scores
           </button>
 
@@ -261,56 +253,30 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
-  <!-- Auto-dismiss flashes -->
-  <!--
+  <!-- JS -->
   <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const jobId = "{{ job_id or '' }}";
-    if (!jobId) return;
+    const modal = document.getElementById('customModal');
+    const openBtn = document.getElementById('openModalBtn');
+    const closeBtns = document.querySelectorAll('.close-btn');
 
-    const wrap   = document.getElementById("buildProgress");
-    const bar    = document.getElementById("buildBar");
-    const label  = document.getElementById("buildLabel");
-    const sumSec = document.getElementById("summarySection");
-    const sumTxt = document.getElementById("summaryText");
+    openBtn.addEventListener('click', () => {
+      modal.style.display = 'block';
+    });
 
-    if (wrap) wrap.style.display = "block";
+    closeBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        modal.style.display = 'none';
+      });
+    });
 
-    const poll = setInterval(async () => {
-      try {
-        const r = await fetch(`/progress/${jobId}`, { cache: "no-store" });
-        const j = await r.json();
-
-        const pct = Math.max(0, Math.min(100, j.pct || 0));
-        if (bar)   bar.style.width = pct + "%";
-        if (label) label.textContent = `${j.phase || "Working"}… ${pct}%`;
-
-        if (j.phase === "done") {
-          clearInterval(poll);
-          if (wrap) wrap.style.display = "none";
-
-          // Show summary immediately without reload
-          if (sumSec && sumTxt) {
-            sumSec.style.display = "block";
-            sumTxt.textContent = j.summary || "(no summary)";
-          } else {
-            // fallback: reload to let server put summary in session
-            location.reload();
-          }
-
-          // optional: clear job id so future loads don't poll
-          // fetch("/progress/" + jobId, { method: "DELETE" }).catch(()=>{});
-        } else if (j.phase === "error") {
-          clearInterval(poll);
-          if (label) label.textContent = "Error: " + (j.error || "Unknown error");
-        }
-      } catch (e) {
-        // keep polling; transient fetch errors are okay
+    // Close modal if user clicks outside of modal content
+    window.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.style.display = 'none';
       }
-    }, 1200);
-  });
+    });
   </script>
-  -->
+
 </body>
 
 </html>

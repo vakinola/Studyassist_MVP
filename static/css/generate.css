@@ -218,12 +218,19 @@ ul.nav>li>a.active {
   border-radius: 10px;
   text-align: center;
   margin-bottom: 20px;
+  overflow: hidden;
 }
 
 .selectedFileName {
   word-break: break-word;
 }
 
+#selectedFileName {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+}
 
 .doc-row {
   display: flex;
@@ -622,6 +629,17 @@ footer {
   margin-bottom: 10px;
 }
 
+/* Drag-over visual feedback */
+.upload-box {
+  border: 2px dashed #1e4ea8;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.upload-box.dragover {
+  background-color: #f0f6ff;
+  border-color: #1e4ea8;
+}
+
 /* 3. Hide the Native File Input */
 .custom-file-input-wrapper input[type="file"] {
   /* Completely hide the default input element */
@@ -950,8 +968,17 @@ footer {
 
 .flash {
   opacity: 1;
-  transition: opacity 0.4s ease;
+  transform: translateY(0);
+  transition: opacity 1s ease, transform 1s ease;
 }
+
+.flash.fade-out {
+  opacity: 0;
+  transform: translateY(-10px);
+  /* slightly slide up while fading */
+}
+
+
 
 /* Animation */
 @keyframes slideIn {

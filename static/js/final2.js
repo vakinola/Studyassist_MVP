@@ -108,66 +108,75 @@ document.addEventListener("DOMContentLoaded", () => {
   // ==============================
   //let uploadedFiles = [];
 
-  const uploadBox = document.getElementById("uploadBox");
-  const selectedFileName = document.getElementById("selectedFileName");
+  if (browseBtn && fileInput) {
+    browseBtn.addEventListener("click", () => fileInput.click());
+  }
 
-  // === Browse button click ===
-  browseBtn?.addEventListener("click", () => {
-    fileInput?.click();
-  });
-
-  // === File input change handler ===
   fileInput?.addEventListener("change", (e) => {
     const file = e.target.files?.[0] || null;
 
-    // Update selected file name
-    if (selectedFileName) {
-      selectedFileName.textContent = file ? `Selected file: ${file.name}` : "";
-    }
+    // ==============================
+    // Drag & Drop Upload Support
+    // ==============================
+    const uploadBox = document.getElementById("uploadBox");
+    const selectedFileName = document.getElementById("selectedFileName");
 
-    // Optional: update status
-    if (fileStatus) {
-      fileStatus.textContent = file ? `Selected: ${file.name}` : "";
-    }
-  });
+    if (uploadBox && fileInput) {
 
-  // === Drag & drop handling ===
-  if (uploadBox && fileInput) {
-    // Prevent default behavior for drag events
-    ["dragenter", "dragover", "dragleave", "drop"].forEach(eventName => {
-      uploadBox.addEventListener(eventName, (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+      // Prevent default browser behavior
+      ["dragenter", "dragover", "dragleave", "drop"].forEach(event => {
+        uploadBox.addEventListener(event, e => {
+          e.preventDefault();
+          e.stopPropagation();
+        });
       });
-    });
 
-    // Add hover style when dragging files over
-    ["dragenter", "dragover"].forEach(eventName => {
-      uploadBox.addEventListener(eventName, () => uploadBox.classList.add("dragover"));
-    });
+      // Highlight drop area
+      ["dragenter", "dragover"].forEach(event => {
+        uploadBox.addEventListener(event, () => {
+          uploadBox.classList.add("dragover");
+        });
+      });
 
-    // Remove hover style when leaving or dropping
-    ["dragleave", "drop"].forEach(eventName => {
-      uploadBox.addEventListener(eventName, () => uploadBox.classList.remove("dragover"));
-    });
+      ["dragleave", "drop"].forEach(event => {
+        uploadBox.addEventListener(event, () => {
+          uploadBox.classList.remove("dragover");
+        });
+      });
 
-    // Handle dropped files
-    uploadBox.addEventListener("drop", (e) => {
-      const files = e.dataTransfer?.files;
-      if (!files || !files.length) return;
+      // Handle dropped file
+      uploadBox.addEventListener("drop", e => {
+        const files = e.dataTransfer.files;
+        if (!files || !files.length) return;
 
-      // Set dropped file to input
-      const dt = new DataTransfer();
-      dt.items.add(files[0]);
-      fileInput.files = dt.files;
+        // Assign dropped file to input
+        fileInput.files = files;
 
-      // Update UI
-      if (selectedFileName) selectedFileName.textContent = `Selected file: ${files[0].name}`;
+        // Show filename
+        if (selectedFileName) {
+          selectedFileName.textContent = `Selected file: ${files[0].name}`;
+        }
 
-      // Trigger change event for the same handling as browse button
-      fileInput.dispatchEvent(new Event("change", { bubbles: true }));
-    });
-  }
+        // Trigger existing change logic (preview, status, etc.)
+        fileInput.dispatchEvent(new Event("change"));
+      });
+    }
+
+
+    if (selectedFileName) selectedFileName.textContent = file ? `Selected file: ${file.name}` : "";
+
+    // EXISTING preview logic
+    if (filePreview && file && (file.type === "text/plain" || /\.txt$/i.test(file.name))) {
+      const reader = new FileReader();
+      reader.onload = (ev) => (filePreview.textContent = String(ev.target?.result || ""));
+      reader.readAsText(file);
+    } else if (filePreview) {
+      filePreview.textContent = file ? "📄 File selected. Preview only available for .txt files." : "";
+    }
+
+    // existing fileStatus update if present
+    if (fileStatus) fileStatus.textContent = file ? `Selected: ${file.name}` : "";
+  });
 
   // ==============================
   // 3️⃣ Ask question handler
