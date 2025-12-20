@@ -265,6 +265,39 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
 
+  function showModal(message) {
+    const modal = $("customModal");
+    const modalMsg = $("customModalMsg");
+    const modalBtn = $("customModalBtn");
+    const modalClose = $("customModalClose");
+    if (!modal || !modalMsg || !modalBtn || !modalClose) return;
+
+    modalMsg.textContent = message;
+    modal.style.display = "block";
+
+    function closeModal() {
+      modal.style.display = "none";
+      modalBtn.removeEventListener("click", closeModal);
+      modalClose.removeEventListener("click", closeModal);
+      modal.removeEventListener("click", outsideClick);
+      window.removeEventListener("keydown", escClose);
+    }
+
+    function escClose(e) {
+      if (e.key === "Escape") closeModal();
+    }
+
+    function outsideClick(e) {
+      if (e.target === modal) closeModal();
+    }
+
+    modalBtn.addEventListener("click", closeModal);
+    modalClose.addEventListener("click", closeModal);
+    window.addEventListener("keydown", escClose);
+    modal.addEventListener("click", outsideClick);
+  }
+
+
 
   // ------------------------------------
   // Handle upload with real progress (0–40%)
@@ -281,7 +314,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const fileInput = document.getElementById("fileInput");
       const file = fileInput?.files?.[0];
-      if (!file) { alert("Please choose a file first!"); return; }
+      //if (!file) { alert("Please choose a file first!"); return; }
+
+      if (!file) {
+        showModal("Please choose a file first!");
+        return;
+      }
 
       // 1) Create job_id before uploading
       const j = await fetch("/init_upload", { method: "POST" }).then(r => r.json());
@@ -596,8 +634,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const num = parseInt(quizRange.value || "5", 10);
 
       const filename = getSelectedDocName();
+
+
       if (!filename) {
-        alert("Please select a document from 'Uploaded files' first.");
+        showModal("Please select a document from 'Uploaded files' first.");
         return;
       }
 

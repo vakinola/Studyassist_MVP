@@ -520,7 +520,7 @@ span#rangeValue {
 }
 
 textarea {
-  width: 97%;
+  width: 95%;
   border-radius: 10px;
   border: 1px solid #ccc;
   padding: 10px;
@@ -682,6 +682,72 @@ footer {
   /* Add space below the button */
 }
 
+.custom-modal {
+  display: none;
+  /* 👈 THIS hides it initially */
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+
+
+
+
+}
+
+.custom-modal-content {
+  background: #fff;
+  margin: 45% 42%;
+  padding: 20px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 400px;
+  position: relative;
+}
+
+.mymodalbutton {
+  background-color: #1e4ea8;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.notification_modal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.custom-modal-close {
+
+  display: grid;
+  justify-content: end;
+  transition: opacity 0.3s ease;
+}
+
+.custom-modal-close:hover {
+  opacity: 0.8;
+
+}
+
+.custom-modal-btn {
+  margin-top: 10px;
+}
+
+.custom-modal-close {
+  cursor: pointer;
+}
+
+.custom-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  /* aligns button to the right */
+  margin-top: 10px;
+}
+
 /* ------------------ Responsive ------------------ */
 @media (max-width: 667px) {
   .sidebar-nav-bottom {
@@ -778,6 +844,40 @@ footer {
     bottom: 100px;
     text-align: center;
   }
+
+  .custom-modal {
+    display: none;
+    /* 👈 THIS hides it initially */
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+
+
+
+
+  }
+
+  .custom-modal-content {
+    background: #fff;
+    margin: 74% 22%;
+    padding: 10px;
+    width: 90%;
+    max-width: 200px;
+    font-size: 0.7rem;
+  }
+
+  .mymodalbutton {
+    padding: 5px 10px;
+
+    font-size: 10px;
+  }
+
+
+
+
+
+
 }
 
 /* ==========================================================================
@@ -978,6 +1078,10 @@ footer {
   /* slightly slide up while fading */
 }
 
+.mobile_padding {
+
+  padding: 0 15px;
+}
 
 
 /* Animation */
@@ -995,4 +1099,169 @@ footer {
 
 .main {
   min-height: 100vh;
+}
+
+/* ==========================================================================
+   Results page
+   ========================================================================== */
+
+
+.results_container {
+  padding: 1rem;
+
+}
+
+.results_container h2 {
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+
+}
+
+thead {
+  background-color: #1e4ea8;
+  color: white;
+}
+
+th,
+td {
+  padding: 0.9rem 1rem;
+  text-align: left;
+  font-size: 0.95rem;
+}
+
+tbody tr {
+  border-bottom: 1px solid #eee;
+}
+
+tbody tr:last-child {
+  border-bottom: none;
+}
+
+tbody tr:hover {
+  background: #f8f9ff;
+}
+
+.score {
+  font-weight: 600;
+  color: #1e4ea8;
+}
+
+.table_wrapper {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
+}
+
+
+
+
+@media (max-width: 768px) {
+
+  table,
+  thead,
+  tbody,
+  tr {
+    display: block;
+    width: 100%;
+  }
+
+  thead {
+    display: none;
+  }
+
+  .results_container {
+    padding: 1rem;
+  }
+
+  tbody tr {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border-radius: 14px;
+    background: white;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  }
+
+  /* GRID ROW */
+  td {
+    display: grid;
+    grid-template-columns: 110px .9fr;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.5rem 0;
+    font-size: 0.95rem;
+    border: none;
+    word-break: break-all;
+  }
+
+  /* LABEL BOX */
+  td::before {
+    content: attr(data-label);
+    background: #f1f5f9;
+    color: #475569;
+    font-weight: 600;
+    padding: 0.35rem 0.6rem;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    word-break: break-word;
+  }
+
+  /* VALUE BOX */
+  td:not(::before) {
+    color: #111827;
+    text-align: left;
+  }
+
+  /* SCORE HIGHLIGHT */
+  td.score {
+    font-weight: 600;
+    color: #4f46e5;
+  }
+}
+
+@media (max-width: 667px) {
+
+  .flash-container {
+    margin-top: 10px;
+  }
+
+  .sidebar-nav-bottom-results {
+
+    position: static;
+    margin-top: 10px;
+
+  }
+
+  .result_side_hidden {
+    display: block !important;
+  }
+
+  .result_side_hidden {
+    position: fixed;
+    top: 0;
+    left: -110%;
+    width: 90%;
+    height: 100%;
+    background: #1e4ea8;
+    transition: left 0.3s ease;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 80px;
+    overflow-y: scroll;
+  }
+
+
 }

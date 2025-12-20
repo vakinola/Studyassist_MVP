@@ -2,16 +2,6 @@
 <html lang="en">
 
 <head>
-  <!-- Google Tag Manager -->
-  <script>(function (w, d, s, l, i) {
-      w[l] = w[l] || []; w[l].push({
-        'gtm.start':
-          new Date().getTime(), event: 'gtm.js'
-      }); var f = d.getElementsByTagName(s)[0],
-        j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
-          'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
-    })(window, document, 'script', 'dataLayer', 'GTM-MRKQ9T4W');</script>
-  <!-- End Google Tag Manager -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description"
@@ -23,29 +13,9 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/generate.css') }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/font-awesome.min.css') }}" />
-
-  <style>
-
-  </style>
 </head>
 
-
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-D9JXVY49DR"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag() { dataLayer.push(arguments); }
-  gtag('js', new Date());
-
-  gtag('config', 'G-D9JXVY49DR');
-</script>
-
-
 <body data-job-id="{{ job_id or '' }}">
-  <!-- Google Tag Manager (noscript) -->
-  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MRKQ9T4W" height="0" width="0"
-      style="display:none;visibility:hidden"></iframe></noscript>
-  <!-- End Google Tag Manager (noscript) -->
   <!-- Header / Top Nav -->
   <header id="header" class="header-section">
     <div class="header-container">
@@ -198,8 +168,6 @@
 
 
 
-
-
         <!-- SUMMARY -->
         {% if summary %}
         <section class="features" id="summarySection">
@@ -275,26 +243,6 @@
         </section>
 
       </div>
-
-      <!-- Custom Modal -->
-      <div id="customModal" class="custom-modal">
-        <div class="custom-modal-content">
-          <div class="notification_modal">
-            <p><strong> Notification </strong> </p>
-            <span id="customModalClose" class="custom-modal-close">&times;</span>
-          </div>
-
-          <p id="customModalMsg">Your message here</p>
-
-
-          <!-- Button container -->
-          <div class="custom-modal-footer">
-            <button id="customModalBtn" class="mymodalbutton">OK</button>
-          </div>
-        </div>
-      </div>
-
-
 
       <footer>© 2025 StudyAssists | All rights reserved</footer>
     </main>
