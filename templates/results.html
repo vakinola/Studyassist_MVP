@@ -2,48 +2,40 @@
 <html lang="en">
 
 <head>
+    <!-- Google Tag Manager -->
+    <script>(function (w, d, s, l, i) {
+            w[l] = w[l] || []; w[l].push({
+                'gtm.start':
+                    new Date().getTime(), event: 'gtm.js'
+            }); var f = d.getElementsByTagName(s)[0],
+                j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
+                    'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
+        })(window, document, 'script', 'dataLayer', 'GTM-MRKQ9T4W');</script>
+    <!-- End Google Tag Manager -->
+
+
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description"
         content="StudyAssists Generate Quiz - Upload and access study notebooks to enhance learning." />
     <meta name="robots" content="index, follow" />
-    <title>StudyAssists | Generate-Quiz</title>
+    <title>StudyAssists | Results </title>
 
     <!-- Page CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/generate.css') }}" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/font-awesome.min.css') }}" />
     <style>
-        table {
-            width: 100%;
-            border-collapse: collapse;
-
-        }
-
-        th,
-        td {
-            padding: 10px 12px;
-            border: 1px solid #ccc;
-            text-align: left;
-        }
-
-        th {
-            background-color: #1e4ea8;
-            color: white;
-            font-weight: bold;
-        }
-
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-
-        .score {
-            font-weight: bold;
-            color: #1e4ea8;
-        }
     </style>
 </head>
 
-<body data-job-id="{{ job_id or '' }}">
+
+
+<body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MRKQ9T4W" height="0" width="0"
+            style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+
     <!-- Header / Top Nav -->
     <header id="header" class="header-section">
         <div class="header-container">
@@ -70,6 +62,24 @@
 
     <!-- Page Columns -->
     <div class="container page-wrap">
+        <aside class="sidebar result_side_hidden" id="sidebar" style="display: none;">
+            <!-- collapsible handle -->
+            <button class="toggle-btn" id="toggleBtn" aria-label="Collapse sidebar">
+                <i class="fa fa-angle-double-left" aria-hidden="true"></i>
+            </button>
+
+            <nav class="sidebar-nav-bottom sidebar-nav-bottom-results" aria-label="Secondary">
+                <a href="{{ url_for('index') }}" class="nav-link">
+                    <i class="fa fa-home" aria-hidden="true"></i> <span>Home</span>
+                </a>
+                <a href="{{ url_for('generate') }}" class="nav-link">
+                    <i class="fa fa-lightbulb-o" aria-hidden="true"></i> <span>Generate-Quiz</span>
+                </a>
+                <a href="#" class="nav-link">
+                    <i class="fa fa-info-circle" aria-hidden="true"></i> <span>Results</span>
+                </a>
+            </nav>
+        </aside>
 
         <!-- ========== MAIN ========== -->
         <main class="main" id="main">
@@ -89,27 +99,37 @@
                 </button>
             </div>
 
-            <h2> Results</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Uploaded File</th>
-                        <th>Score</th>
-                        <th>Percentage</th>
-                        <th>Date & Time</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for result in results %}
-                    <tr>
-                        <td>{{ result.filename }}</td>
-                        <td class="score">{{ result.correct }}/{{ result.total }}</td>
-                         <td class="score">{{ result.percent }}%</td>
-                        <td>{{ result.test_datetime }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+
+            <div class="results_container">
+
+                <h2> Results</h2>
+                <div class="table_wrapper">
+
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Uploaded File</th>
+                                <th>Score</th>
+                                <th>Percentage</th>
+                                <th>Date & Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for result in results %}
+                            <tr>
+                                <td data-label="Uploaded File">{{ result.filename }}</td>
+                                <td data-label="Score" class="score">{{ result.correct }}/{{ result.total }}</td>
+                                <td data-label="Percentage" class="score">{{ result.percent }}%</td>
+                                <td data-label="Date & Time">{{ result.test_datetime }}</td>
+
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
 
             <footer>© 2025 StudyAssists | All rights reserved</footer>
         </main>
@@ -126,54 +146,31 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
 
+
+
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const jobId = "{{ job_id or '' }}";
-            if (!jobId) return;
+        const modal = document.getElementById('customModal');
+        const openBtn = document.getElementById('openModalBtn');
+        const closeBtns = document.querySelectorAll('.close-btn');
 
-            const wrap = document.getElementById("buildProgress");
-            const bar = document.getElementById("buildBar");
-            const label = document.getElementById("buildLabel");
-            const sumSec = document.getElementById("summarySection");
-            const sumTxt = document.getElementById("summaryText");
+        openBtn.addEventListener('click', () => {
+            modal.style.display = 'block';
+        });
 
-            if (wrap) wrap.style.display = "block";
+        closeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                modal.style.display = 'none';
+            });
+        });
 
-            const poll = setInterval(async () => {
-                try {
-                    const r = await fetch(`/progress/${jobId}`, { cache: "no-store" });
-                    const j = await r.json();
-
-                    const pct = Math.max(0, Math.min(100, j.pct || 0));
-                    if (bar) bar.style.width = pct + "%";
-                    if (label) label.textContent = `${j.phase || "Working"}… ${pct}%`;
-
-                    if (j.phase === "done") {
-                        clearInterval(poll);
-                        if (wrap) wrap.style.display = "none";
-
-                        // Show summary immediately without reload
-                        if (sumSec && sumTxt) {
-                            sumSec.style.display = "block";
-                            sumTxt.textContent = j.summary || "(no summary)";
-                        } else {
-                            // fallback: reload to let server put summary in session
-                            location.reload();
-                        }
-
-                        // optional: clear job id so future loads don't poll
-                        // fetch("/progress/" + jobId, { method: "DELETE" }).catch(()=>{});
-                    } else if (j.phase === "error") {
-                        clearInterval(poll);
-                        if (label) label.textContent = "Error: " + (j.error || "Unknown error");
-                    }
-                } catch (e) {
-                    // keep polling; transient fetch errors are okay
-                }
-            }, 1200);
+        // Close modal if user clicks outside of modal content
+        window.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+            }
         });
     </script>
-    -->
+
 </body>
 
 </html>
