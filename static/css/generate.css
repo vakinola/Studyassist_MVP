@@ -683,26 +683,34 @@ footer {
 }
 
 .custom-modal {
-  display: none;
-  /* 👈 THIS hides it initially */
   position: fixed;
   inset: 0;
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 9999;
 
+  display: flex;
+  justify-content: center;
+  align-items: center;
 
-
-
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
 }
+
+.custom-modal.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+
 
 .custom-modal-content {
   background: #fff;
-  margin: 45% 42%;
   padding: 20px;
   border-radius: 8px;
   width: 90%;
   max-width: 400px;
-  position: relative;
+
 }
 
 .mymodalbutton {
@@ -845,27 +853,8 @@ footer {
     text-align: center;
   }
 
-  .custom-modal {
-    display: none;
-    /* 👈 THIS hides it initially */
-    position: fixed;
-    inset: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 9999;
 
 
-
-
-  }
-
-  .custom-modal-content {
-    background: #fff;
-    margin: 74% 22%;
-    padding: 10px;
-    width: 90%;
-    max-width: 200px;
-    font-size: 0.7rem;
-  }
 
   .mymodalbutton {
     padding: 5px 10px;

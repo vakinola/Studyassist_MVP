@@ -235,12 +235,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const deleteDocBtn = document.getElementById("deleteDocBtn");
   deleteDocBtn?.addEventListener("click", async () => {
     const filename = getSelectedDocName();
+
     if (!filename) {
-      showAlert("Please select a document to delete.", "danger");
+      showModal("Please select a document to delete.");
       return;
     }
 
-    if (!confirm(`Delete "${filename}" and its database?`)) return;
+    const confirmed = await showConfirmModal(
+      `Delete "${filename}" and its database?`
+    );
+
+    if (!confirmed) return;
+
 
     try {
       const resp = await fetch("/delete_doc", {
@@ -264,6 +270,54 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  function showConfirmModal(message) {
+    return new Promise((resolve) => {
+      const modal = $("customModal");
+      const modalMsg = $("customModalMsg");
+      const modalBtn = $("customModalBtn");      // OK / Confirm
+      const modalClose = $("customModalClose");  // X / Cancel
+
+      if (!modal || !modalMsg || !modalBtn || !modalClose) {
+        resolve(false);
+        return;
+      }
+
+      modalMsg.textContent = message;
+      modal.classList.add("show");
+
+      function cleanup() {
+        modal.classList.remove("show");
+        modalBtn.removeEventListener("click", onConfirm);
+        modalClose.removeEventListener("click", onCancel);
+        modal.removeEventListener("click", onOutside);
+        window.removeEventListener("keydown", onEsc);
+      }
+
+      function onConfirm() {
+        cleanup();
+        resolve(true);
+      }
+
+      function onCancel() {
+        cleanup();
+        resolve(false);
+      }
+
+      function onOutside(e) {
+        if (e.target === modal) onCancel();
+      }
+
+      function onEsc(e) {
+        if (e.key === "Escape") onCancel();
+      }
+
+      modalBtn.addEventListener("click", onConfirm);
+      modalClose.addEventListener("click", onCancel);
+      modal.addEventListener("click", onOutside);
+      window.addEventListener("keydown", onEsc);
+    });
+  }
+
 
   function showModal(message) {
     const modal = $("customModal");
@@ -273,10 +327,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!modal || !modalMsg || !modalBtn || !modalClose) return;
 
     modalMsg.textContent = message;
-    modal.style.display = "block";
+    modal.classList.add("show");
 
     function closeModal() {
-      modal.style.display = "none";
+      modal.classList.remove("show");
       modalBtn.removeEventListener("click", closeModal);
       modalClose.removeEventListener("click", closeModal);
       modal.removeEventListener("click", outsideClick);
@@ -629,6 +683,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  function clearPreviousQuiz() {
+    lastQuiz = [];
+
+    if (quizList) quizList.innerHTML = "";
+    if (quizResults) quizResults.innerHTML = "";
+    if (quizStatus) quizStatus.textContent = "";
+    if (quizWarning) quizWarning.textContent = "";
+    if (exportDiv) exportDiv.innerHTML = "";
+    if (quizBox) quizBox.style.display = "none";
+  }
+
   if (generateBtn && quizRange) {
     generateBtn.addEventListener("click", async () => {
       const num = parseInt(quizRange.value || "5", 10);
@@ -640,6 +705,9 @@ document.addEventListener("DOMContentLoaded", () => {
         showModal("Please select a document from 'Uploaded files' first.");
         return;
       }
+
+      // CLEAR OLD QUIZ BEFORE GENERATING A NEW ONE
+      clearPreviousQuiz();
 
       generateBtn.disabled = true;
       if (quizStatus) quizStatus.textContent = `Generating ${num} questions...`;

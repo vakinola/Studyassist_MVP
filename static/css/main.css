@@ -722,6 +722,11 @@ ul.nav>li>a.active {
     height: 570px;
   }
 
+  .container-test {
+    width: 97%;
+    margin-left: 10%;
+  }
+
 }
 
 /* ---- End of max-width 992px CSS ---- */
@@ -809,6 +814,12 @@ ul.nav>li>a.active {
   .download-content {
     text-align: center;
   }
+
+  .container-test {
+    width: 95%;
+
+
+  }
 }
 
 /* ---- End of max-width 767px CSS ---- */
@@ -877,7 +888,7 @@ ul.nav>li>a.active {
    ========================================================================== */
 
 .container-test {
-  width: 95%;
+  width: 98%;
 
 
 }
