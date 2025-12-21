@@ -1,0 +1,35 @@
+version: "3.9"
+
+services:
+  app:
+    build: .
+    container_name: flask_app
+    restart: always
+
+    environment:
+      PORT: 8000
+      FLASK_ENV: production
+    # OPENAI_API_KEY: ${OPENAI_API_KEY}
+
+    env_file:
+      - .env
+
+    ports:
+      - "8000:8000"
+
+    volumes:
+      # persistent storage
+      - uploads:/app/uploads
+      - chromadb:/app/chroma_data
+
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/" ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  uploads:
+  chromadb:
+
+

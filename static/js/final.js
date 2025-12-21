@@ -2,6 +2,13 @@
 document.addEventListener("DOMContentLoaded", () => {
   "use strict";
 
+  document.querySelectorAll(".flash").forEach((flash) => {
+    setTimeout(() => {
+      flash.style.opacity = "0";
+      setTimeout(() => flash.remove(), 400); // match CSS transition
+    }, 6000);
+  });
+
   // --- Small helpers ---
   const $ = (id) => document.getElementById(id);
   const statusEl = $("opStatus");
@@ -9,25 +16,25 @@ document.addEventListener("DOMContentLoaded", () => {
   console.log("delete button found:", !!document.getElementById("deleteDocBtn"));
 
   function showAlert(message, type = "success", timeout = 4000) {
-  const container = document.getElementById("alertContainer");
-  if (!container) return;
+    const container = document.getElementById("alertContainer");
+    if (!container) return;
 
-  container.innerHTML = `
+    container.innerHTML = `
     <div class="alert alert-${type} alert-dismissible fade show" role="alert">
       ${message}
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
   `;
 
-  if (timeout) {
-    setTimeout(() => {
-      const alert = container.querySelector(".alert");
-      alert?.classList.remove("show");
-      alert?.classList.add("fade");
-      setTimeout(() => alert?.remove(), 300);
-    }, timeout);
+    if (timeout) {
+      setTimeout(() => {
+        const alert = container.querySelector(".alert");
+        alert?.classList.remove("show");
+        alert?.classList.add("fade");
+        setTimeout(() => alert?.remove(), 300);
+      }, timeout);
+    }
   }
-}
 
   async function postJSON(url, bodyObj) {
     const resp = await fetch(url, {
@@ -101,69 +108,66 @@ document.addEventListener("DOMContentLoaded", () => {
   // ==============================
   //let uploadedFiles = [];
 
-  if (browseBtn && fileInput) {
-    browseBtn.addEventListener("click", () => fileInput.click());
-  }
+  const uploadBox = document.getElementById("uploadBox");
+  const selectedFileName = document.getElementById("selectedFileName");
 
+  // === Browse button click ===
+  browseBtn?.addEventListener("click", () => {
+    fileInput?.click();
+  });
+
+  // === File input change handler ===
   fileInput?.addEventListener("change", (e) => {
     const file = e.target.files?.[0] || null;
 
-    // NEW: show selected file name
-    const selectedFileName = document.getElementById("selectedFileName");
-    if (selectedFileName) selectedFileName.textContent = file ? `Selected file: ${file.name}` : "";
-
-    // EXISTING preview logic
-    if (filePreview && file && (file.type === "text/plain" || /\.txt$/i.test(file.name))) {
-      const reader = new FileReader();
-      reader.onload = (ev) => (filePreview.textContent = String(ev.target?.result || ""));
-      reader.readAsText(file);
-    } else if (filePreview) {
-      filePreview.textContent = file ? "📄 File selected. Preview only available for .txt files." : "";
+    // Update selected file name
+    if (selectedFileName) {
+      selectedFileName.textContent = file ? `Selected file: ${file.name}` : "";
     }
 
-    // existing fileStatus update if present
-    if (fileStatus) fileStatus.textContent = file ? `Selected: ${file.name}` : "";
+    // Optional: update status
+    if (fileStatus) {
+      fileStatus.textContent = file ? `Selected: ${file.name}` : "";
+    }
   });
 
-
-  /*function renderFileList() {
-    if (!fileList) return;
-    fileList.innerHTML = "";
-    uploadedFiles.forEach((file, index) => {
-      const li = document.createElement("li");
-      li.classList.add("uploaded-file-item");
-      li.dataset.index = index;
-
-      const nameSpan = document.createElement("span");
-      nameSpan.textContent = file.name;
-      nameSpan.classList.add("file-name");
-
-      const deleteBtn = document.createElement("button");
-      deleteBtn.classList.add("delete-file-btn");
-      deleteBtn.innerHTML = '<i class="fa fa-times"></i>';
-
-      li.appendChild(nameSpan);
-      li.appendChild(deleteBtn);
-      fileList.appendChild(li);
-    });
-    attachDeleteListeners();
-  }
-
-  function deleteFile(index) {
-    uploadedFiles.splice(index, 1);
-    renderFileList();
-    fileInput.value = "";
-  }
-
-  function attachDeleteListeners() {
-    document.querySelectorAll(".delete-file-btn").forEach((btn) => {
-      btn.addEventListener("click", (e) => {
+  // === Drag & drop handling ===
+  if (uploadBox && fileInput) {
+    // Prevent default behavior for drag events
+    ["dragenter", "dragover", "dragleave", "drop"].forEach(eventName => {
+      uploadBox.addEventListener(eventName, (e) => {
+        e.preventDefault();
         e.stopPropagation();
-        const li = e.target.closest("li");
-        if (li) deleteFile(parseInt(li.dataset.index));
       });
     });
-  } */
+
+    // Add hover style when dragging files over
+    ["dragenter", "dragover"].forEach(eventName => {
+      uploadBox.addEventListener(eventName, () => uploadBox.classList.add("dragover"));
+    });
+
+    // Remove hover style when leaving or dropping
+    ["dragleave", "drop"].forEach(eventName => {
+      uploadBox.addEventListener(eventName, () => uploadBox.classList.remove("dragover"));
+    });
+
+    // Handle dropped files
+    uploadBox.addEventListener("drop", (e) => {
+      const files = e.dataTransfer?.files;
+      if (!files || !files.length) return;
+
+      // Set dropped file to input
+      const dt = new DataTransfer();
+      dt.items.add(files[0]);
+      fileInput.files = dt.files;
+
+      // Update UI
+      if (selectedFileName) selectedFileName.textContent = `Selected file: ${files[0].name}`;
+
+      // Trigger change event for the same handling as browse button
+      fileInput.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+  }
 
   // ==============================
   // 3️⃣ Ask question handler
@@ -231,12 +235,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const deleteDocBtn = document.getElementById("deleteDocBtn");
   deleteDocBtn?.addEventListener("click", async () => {
     const filename = getSelectedDocName();
+
     if (!filename) {
-      showAlert("Please select a document to delete.", "danger");
+      showModal("Please select a document to delete.");
       return;
     }
 
-    if (!confirm(`Delete "${filename}" and its database?`)) return;
+    const confirmed = await showConfirmModal(
+      `Delete "${filename}" and its database?`
+    );
+
+    if (!confirmed) return;
+
 
     try {
       const resp = await fetch("/delete_doc", {
@@ -248,7 +258,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!resp.ok || data.ok === false) {
         throw new Error(data.error || "Delete failed");
       }
-      
+
       // ✅ Green success alert
       showAlert(data.message || "Document deleted successfully.", "success");
 
@@ -259,6 +269,87 @@ document.addEventListener("DOMContentLoaded", () => {
       showAlert(e.message, "danger");
     }
   });
+
+  function showConfirmModal(message) {
+    return new Promise((resolve) => {
+      const modal = $("customModal");
+      const modalMsg = $("customModalMsg");
+      const modalBtn = $("customModalBtn");      // OK / Confirm
+      const modalClose = $("customModalClose");  // X / Cancel
+
+      if (!modal || !modalMsg || !modalBtn || !modalClose) {
+        resolve(false);
+        return;
+      }
+
+      modalMsg.textContent = message;
+      modal.classList.add("show");
+
+      function cleanup() {
+        modal.classList.remove("show");
+        modalBtn.removeEventListener("click", onConfirm);
+        modalClose.removeEventListener("click", onCancel);
+        modal.removeEventListener("click", onOutside);
+        window.removeEventListener("keydown", onEsc);
+      }
+
+      function onConfirm() {
+        cleanup();
+        resolve(true);
+      }
+
+      function onCancel() {
+        cleanup();
+        resolve(false);
+      }
+
+      function onOutside(e) {
+        if (e.target === modal) onCancel();
+      }
+
+      function onEsc(e) {
+        if (e.key === "Escape") onCancel();
+      }
+
+      modalBtn.addEventListener("click", onConfirm);
+      modalClose.addEventListener("click", onCancel);
+      modal.addEventListener("click", onOutside);
+      window.addEventListener("keydown", onEsc);
+    });
+  }
+
+
+  function showModal(message) {
+    const modal = $("customModal");
+    const modalMsg = $("customModalMsg");
+    const modalBtn = $("customModalBtn");
+    const modalClose = $("customModalClose");
+    if (!modal || !modalMsg || !modalBtn || !modalClose) return;
+
+    modalMsg.textContent = message;
+    modal.classList.add("show");
+
+    function closeModal() {
+      modal.classList.remove("show");
+      modalBtn.removeEventListener("click", closeModal);
+      modalClose.removeEventListener("click", closeModal);
+      modal.removeEventListener("click", outsideClick);
+      window.removeEventListener("keydown", escClose);
+    }
+
+    function escClose(e) {
+      if (e.key === "Escape") closeModal();
+    }
+
+    function outsideClick(e) {
+      if (e.target === modal) closeModal();
+    }
+
+    modalBtn.addEventListener("click", closeModal);
+    modalClose.addEventListener("click", closeModal);
+    window.addEventListener("keydown", escClose);
+    modal.addEventListener("click", outsideClick);
+  }
 
 
 
@@ -277,36 +368,41 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const fileInput = document.getElementById("fileInput");
       const file = fileInput?.files?.[0];
-      if (!file) { alert("Please choose a file first!"); return; }
+      //if (!file) { alert("Please choose a file first!"); return; }
+
+      if (!file) {
+        showModal("Please choose a file first!");
+        return;
+      }
 
       // 1) Create job_id before uploading
       const j = await fetch("/init_upload", { method: "POST" }).then(r => r.json());
       if (!j.ok) { alert("Could not start job"); return; }
       const jobId = j.job_id;
 
-      // 2) Show progress & expose jobId for poller
+      // 2) Show progress bar
       const wrap = document.getElementById("buildProgress");
       const bar = document.getElementById("buildBar");
       const label = document.getElementById("buildLabel");
       if (wrap) wrap.style.display = "block";
       if (bar) {
-        bar.classList.remove("bg-danger");     // in case a prior error colored it red
-        bar.style.backgroundColor = "#22c55e"; // green
+        bar.classList.remove("bg-danger");
+        bar.style.backgroundColor = "#22c55e";
         bar.style.width = "0%";
       }
       if (label) label.textContent = "Uploading… 0%";
-      if (document.body) document.body.dataset.jobId = jobId;
 
-      // ✅ start the poller now (so it can render 0→5→10… during upload)
+      // Start poller
       startProgressPoller(jobId);
 
-      // 3) Upload with progress → report to server
+      // 3) Upload file via XHR
       const formData = new FormData();
       formData.append("file", file);
 
       const xhr = new XMLHttpRequest();
       xhr.addEventListener("load", () => {
-        window.location.href = "/generate"; // poller shows build→summary
+        // Upload finished, but server processing may continue.
+        // Let the poller handle showing container & reload.
       });
       xhr.addEventListener("error", () => {
         if (label) label.textContent = "Upload error!";
@@ -318,21 +414,19 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-
-
-  // ----------------------------
-  // Upload/Build/Summary polling (server is source of truth)
-  // ----------------------------
-  const buildProgress = document.getElementById("buildProgress");
-  const buildBar = document.getElementById("buildBar");
-  const buildLabel = document.getElementById("buildLabel");
-
+  // ==============================
+  // Poller handles progress updates
+  // ==============================
   function startProgressPoller(jobId) {
+    const buildProgress = document.getElementById("buildProgress");
+    const buildBar = document.getElementById("buildBar");
+    const buildLabel = document.getElementById("buildLabel");
     if (!jobId || !buildProgress || !buildBar || !buildLabel || window.__progressPoller) return;
 
     buildProgress.style.display = "block";
     buildBar.classList.remove("bg-danger");
-    buildBar.style.backgroundColor = "#22c55e";
+    //buildBar.style.backgroundColor = "#22c55e";
+    buildBar.style.backgroundColor = "#1e4ea8";
 
     const stop = () => { clearInterval(window.__progressPoller); window.__progressPoller = null; };
 
@@ -351,8 +445,14 @@ document.addEventListener("DOMContentLoaded", () => {
         if (phase === "completed") {
           stop();
           buildLabel.textContent = "Completed 100%";
-          // Let /generate pull summary out of PROGRESS and put it in session
+
+          // ✅ Show uploaded files container
+          const uploadedContainer = document.getElementById("uploadedFilesContainer");
+          if (uploadedContainer) uploadedContainer.style.display = "block";
+
+          // Optional: refresh /generate page or fetch updated file list
           setTimeout(() => location.reload(), 400);
+
         } else if (phase === "error") {
           stop();
           buildLabel.textContent = `Error: ${data.error || "Unknown error"}`;
@@ -363,7 +463,7 @@ document.addEventListener("DOMContentLoaded", () => {
         buildLabel.textContent = "Could not fetch progress.";
         buildBar.classList.add("bg-danger");
       }
-    }, 800); // a bit faster during upload feels nicer
+    }, 800);
 
     window.addEventListener("beforeunload", stop, { once: true });
     document.addEventListener("visibilitychange", () => { if (document.hidden) stop(); });
@@ -512,6 +612,12 @@ document.addEventListener("DOMContentLoaded", () => {
           Your Score: <strong>${correctCount}/${total}</strong> (${pct}%)
         </div>
       `;
+
+      // Show the "View Scores" button
+      const viewBtn = document.getElementById("viewScoresBtn");
+      if (viewBtn) {
+        viewBtn.classList.remove("result-hidden");
+      }
     }
     if (quizStatus) quizStatus.textContent = '✅ Graded.';
 
@@ -524,7 +630,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function attachExportButtons() {
     if (!exportDiv) return;
     exportDiv.innerHTML = `
-      <h6 class="mt-4">📤 Export Options</h6>
+      <h6 class="mt-2">📤 Export Options</h6>
       <button id="exportCsvBtn" class="btn btn-outline-secondary me-2 mybutton">Export CSV</button>
       <button id="exportPdfBtn" class="btn btn-outline-secondary mybutton">Export PDF</button>
     `;
@@ -577,15 +683,31 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  function clearPreviousQuiz() {
+    lastQuiz = [];
+
+    if (quizList) quizList.innerHTML = "";
+    if (quizResults) quizResults.innerHTML = "";
+    if (quizStatus) quizStatus.textContent = "";
+    if (quizWarning) quizWarning.textContent = "";
+    if (exportDiv) exportDiv.innerHTML = "";
+    if (quizBox) quizBox.style.display = "none";
+  }
+
   if (generateBtn && quizRange) {
     generateBtn.addEventListener("click", async () => {
       const num = parseInt(quizRange.value || "5", 10);
 
       const filename = getSelectedDocName();
+
+
       if (!filename) {
-        alert("Please select a document from 'Uploaded files' first.");
+        showModal("Please select a document from 'Uploaded files' first.");
         return;
       }
+
+      // CLEAR OLD QUIZ BEFORE GENERATING A NEW ONE
+      clearPreviousQuiz();
 
       generateBtn.disabled = true;
       if (quizStatus) quizStatus.textContent = `Generating ${num} questions...`;
@@ -653,6 +775,18 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   });
+
+
+  if (fileList) {
+    const checkboxes = fileList.querySelectorAll(".doc-select");
+    if (checkboxes.length === 1) {
+      checkboxes[0].checked = true;
+      // Trigger change event to run existing logic (load summary, clear old quiz, etc.)
+      const event = new Event("change", { bubbles: true });
+      checkboxes[0].dispatchEvent(event);
+    }
+  }
+
 
   async function loadSummaryFor(filename) {
     const sumSec = document.getElementById("summarySection");
