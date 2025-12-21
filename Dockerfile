@@ -35,5 +35,11 @@ USER deployuser
 EXPOSE $PORT
 
 # Start your app (update the command if using FastAPI/Uvicorn)
-CMD gunicorn -w 4 app:app -b 0.0.0.0:$PORT
+CMD gunicorn app:app \
+  -b 0.0.0.0:$PORT \
+  -w 4 \
+  --timeout 120 \
+  --graceful-timeout 30 \
+  --keep-alive 5 \
+  --threads 4
 
