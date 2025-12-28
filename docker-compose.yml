@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   app:
     build: .
@@ -12,7 +10,7 @@ services:
     # OPENAI_API_KEY: ${OPENAI_API_KEY}
 
     env_file:
-      - .env
+      - /opt/studyassist/flask.env
 
     ports:
       - "8000:8000"
