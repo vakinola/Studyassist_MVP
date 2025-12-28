@@ -19,6 +19,7 @@ body {
 .header-container {
   display: flex;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .header-container {
@@ -28,9 +29,9 @@ body {
 .header-section {
   background-color: transparent;
   width: 100%;
-  height: 80px;
+  height: 70px;
   z-index: 999;
-  padding: 10px 0;
+  padding: 0px;
 }
 
 .navbar-fixed-top {
@@ -766,6 +767,12 @@ footer {
   margin-top: 10px;
 }
 
+.features .slider-label {
+  opacity: .6;
+  font-size: 13px;
+}
+
+
 /* ------------------ Responsive ------------------ */
 @media (max-width: 667px) {
   .sidebar-nav-bottom {
@@ -929,6 +936,7 @@ body {
   background: #fff;
   color: rgba(0, 0, 0, 0.8);
   padding-bottom: 10px;
+  min-height: calc(100vh - 74px)
 }
 
 /* The main-section grows, footer stays at bottom naturally */
@@ -948,6 +956,57 @@ footer {
   margin-top: auto;
   /* push it to the bottom of main */
 }
+
+
+.marquee-container {
+  width: 100%;
+  overflow: hidden;
+
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 18s linear infinite;
+}
+
+.marquee-track span {
+  white-space: nowrap;
+  padding: 15px 30px;
+  font-size: 1.1rem;
+  color: #2c65d1;
+}
+
+.marquee-track a {
+  color: inherit;
+  /* keeps the same color as text */
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.marquee-track a:visited {
+  color: inherit;
+  /* prevents purple visited color */
+}
+
+.marquee-track a:hover,
+.marquee-track a:focus {
+  text-decoration: underline;
+  /* keep underline on hover */
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+
+
 
 
 .answer-correct {
@@ -1096,9 +1155,7 @@ footer {
   }
 }
 
-.main {
-  min-height: 100vh;
-}
+
 
 /* ==========================================================================
    Results page
@@ -1262,5 +1319,239 @@ tbody tr:hover {
     overflow-y: scroll;
   }
 
+  .marquee-track {
+    animation-duration: 25s;
+    /* slower for readability */
+  }
 
+  .marquee-track span {
+    font-size: 1rem;
+  }
+
+  /* Animation moves FULL text width */
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+
+}
+
+/* ==========================================================================
+   Feedback Modal
+   ========================================================================== */
+
+
+/* Make main relative so absolute modal is inside it */
+#main {
+  position: relative;
+}
+
+/* Backdrop inside main */
+.feedback-backdrop {
+  position: absolute;
+  /* was fixed */
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 1000;
+}
+
+.feedback-backdrop.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* Modal remains the same */
+.feedback-modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px;
+  width: 100%;
+  max-width: 420px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  animation: feedback-scale-in 0.3s ease;
+}
+
+
+.feedback-modal *,
+.feedback-modal *::before,
+.feedback-modal *::after {
+  box-sizing: border-box;
+}
+
+
+@keyframes feedback-scale-in {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.feedback-title {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #111;
+}
+
+.feedback-subtitle {
+  margin: 8px 0 20px;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.feedback-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #333;
+}
+
+.feedback-field {
+  margin-bottom: 16px;
+}
+
+.feedback-select,
+.feedback-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font-size: 0.95rem;
+}
+
+.feedback-textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+/* Rating */
+.feedback-stars {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.feedback-stars input {
+  display: none;
+}
+
+.feedback-stars label {
+  font-size: 1.6rem;
+  color: #ddd;
+  cursor: pointer;
+}
+
+.feedback-stars input:checked~label,
+.feedback-stars label:hover,
+.feedback-stars label:hover~label {
+  color: #f5b301;
+}
+
+/* Actions */
+.feedback-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.feedback-btn {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.feedback-cancel {
+  background: #f2f2f2;
+  color: #333;
+}
+
+.feedback-send {
+  background: #2c65d1;
+  color: #fff;
+}
+
+.feedback-send:hover {
+  background: #1f4fb3;
+}
+
+@media (max-width: 600px) {
+
+  .feedback-modal {
+    width: 80%;
+    max-width: 320px;
+    padding: 16px 20px;
+    border-radius: 12px;
+
+  }
+
+  .feedback-select,
+  .feedback-textarea {
+    font-size: .7rem;
+  }
+
+  .feedback-title {
+    font-size: 1.2rem;
+  }
+
+  .feedback-subtitle {
+    font-size: 0.85rem;
+  }
+
+  .feedback-stars label {
+    font-size: 1.6rem;
+    /* smaller stars for touch */
+  }
+
+  .feedback-actions {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+
+  .feedback-btn {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 0.95rem;
+  }
+
+  .main {
+    min-height: 100vh;
+  }
+
+  .fa-home:before,
+  .fa-lightbulb-o:before,
+  .fa-info-circle:before,
+  .fa-comment:before {
+    margin-right: 5px;
+  }
+
+
+
+  .fa-lightbulb-o:before {
+    margin-right: 8px;
+    padding-left: 2px;
+    align-items: center;
+  }
 }

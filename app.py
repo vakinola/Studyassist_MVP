@@ -19,6 +19,7 @@ from datetime import datetime
 from werkzeug.wrappers import Request as WerkzeugRequest
 from tempfile import SpooledTemporaryFile
 from flask.wrappers import Request as FlaskRequest
+from flask_mail import Mail, Message
 PROGRESS = {} 
 
 # LangChain / OpenAI
@@ -44,6 +45,19 @@ app.config["SECRET_KEY"] = (
     or os.getenv("SECRET_KEY")
     or "dev-change-me"
 )
+
+# Flask-Mail config
+app.config.update(
+    MAIL_SERVER="smtp.gmail.com",
+    MAIL_PORT=587,
+    MAIL_USE_TLS=True,
+
+    MAIL_USERNAME=os.getenv("MAIL_USERNAME"),
+    MAIL_PASSWORD=os.getenv("MAIL_PASSWORD"),
+    MAIL_DEFAULT_SENDER=os.getenv("MAIL_USERNAME")
+)
+
+mail = Mail(app)
 
 
 app.config["UPLOAD_FOLDER"] = os.path.join(BASEDIR, "uploads")
@@ -702,6 +716,44 @@ def results():
         "results.html",
         results=session.get("results", [])
     )
+
+@app.route("/send-feedback", methods=["POST"])
+def send_feedback():
+    rating = request.form.get("rating", "N/A")
+    category = request.form.get("category", "N/A")
+    message = request.form.get("message", "").strip()
+
+    if not message:
+        return jsonify({
+            "status": "error",
+            "message": "Message cannot be empty."
+        })
+
+    try:
+        msg = Message(
+            subject=f"Studyassists Feedback — {category}",
+            recipients=["info@studyassists.com"], 
+            body=(
+                f"Rating: {rating}\n"
+                f"Category: {category}\n\n"
+                f"Message:\n{message}"
+            )
+        )
+
+        mail.send(msg)
+
+        return jsonify({
+            "status": "success",
+            "message": "Thank you! Your feedback has been sent."
+        })
+
+    except Exception as e:
+        print("Email error:", e)
+        return jsonify({
+            "status": "error",
+            "message": "Unable to send feedback at this time."
+        })
+
 
 
 

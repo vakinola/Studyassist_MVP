@@ -25,7 +25,6 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/font-awesome.min.css') }}" />
 
   <style>
-
   </style>
 </head>
 
@@ -63,6 +62,7 @@
               <li><a href="{{ url_for('index') }}">Home</a></li>
               <li><a class="active" href="{{ url_for('generate') }}">Upload Notebook</a></li>
               <li><a href="{{ url_for('results') }}">Results</a></li>
+              <li><a href="#" class="feedback-open">Feedback</a></li>
             </ul>
           </div>
         </div>
@@ -91,7 +91,7 @@
 
               <div class="custom-file-input-wrapper">
                 <button id="browseBtn" type="button" class="custom-upload-button mybutton">Browse</button>
-                <input type="file" id="fileInput" name="file" accept=".pdf,.docx,.txt" hidden />
+                <input type="file" id="fileInput" name="file" accept=".pdf,.docx,.txt,.pptx" hidden />
               </div>
 
               <p id="selectedFileName" class="text-muted mt-2"></p>
@@ -158,12 +158,79 @@
         <a href="{{ url_for('results') }}" class="nav-link">
           <i class="fa fa-info-circle" aria-hidden="true"></i> <span>Results</span>
         </a>
+
+        <a href="#" class="feedback-open nav-link">
+          <i class="fa fa-comment" aria-hidden="true"></i> <span>Feedback</span>
+        </a>
       </nav>
     </aside>
     <!-- /SIDEBAR -->
 
     <!-- ========== MAIN ========== -->
     <main class="main" id="main">
+
+      <!-- Feedback Backdrop -->
+      <div class="feedback-backdrop" id="feedback-modal" aria-hidden="true" action="/send-feedback" method="POST">
+        <!-- Modal Form inside the backdrop -->
+        <form class="feedback-modal" id="feedbackForm">
+
+          <h2 class="feedback-title">Give Feedback</h2>
+          <p class="feedback-subtitle">
+            Help us improve <strong>Studyassists</strong> for everyone.
+          </p>
+
+          <!-- Rating -->
+          <div class="feedback-rating">
+            <label class="feedback-label">Rate your experience</label>
+            <div class="feedback-stars">
+
+
+
+
+              <input type="radio" name="rating" id="feedback-star5" value="5">
+              <label for="feedback-star5">★</label>
+              <input type="radio" name="rating" id="feedback-star4" value="4">
+              <label for="feedback-star4">★</label>
+              <input type="radio" name="rating" id="feedback-star3" value="3">
+              <label for="feedback-star3">★</label>
+              <input type="radio" name="rating" id="feedback-star2" value="2">
+              <label for="feedback-star2">★</label>
+              <input type="radio" name="rating" id="feedback-star1" value="1">
+              <label for="feedback-star1">★</label>
+            </div>
+
+          </div>
+
+          <!-- Category -->
+          <div class="feedback-field">
+            <label class="feedback-label">Category</label>
+            <select name="category" class="feedback-select" required>
+              <option value="" disabled selected>Select category</option>
+              <option value="Bug">Bug</option>
+              <option value="Feature Request">Feature Request</option>
+              <option value="UI / UX">UI / UX</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <!-- Message -->
+          <div class="feedback-field">
+            <label class="feedback-label">Message</label>
+            <textarea name="message" class="feedback-textarea" placeholder="Let us know what you think or discovered"
+              required></textarea>
+          </div>
+
+          <!-- Actions -->
+          <div class="feedback-actions">
+            <button type="button" class="feedback-btn feedback-cancel" id="feedback-close">Cancel</button>
+            <button type="submit" class="feedback-btn feedback-send">Send</button>
+          </div>
+
+        </form>
+      </div>
+
+
+
       <!-- Mobile header -->
       <div class="mobile-header">
         <div class="logo-text">
@@ -181,6 +248,20 @@
       </div>
 
       <div class="mobile_padding">
+
+
+        <div class="marquee-container">
+          <div class="marquee-track">
+            <span>
+              Your input helps us build better features. &nbsp; • &nbsp;
+              Leave a
+              <a href="#" class="feedback-open">
+                Feedback
+              </a>
+              &nbsp; •
+            </span>
+          </div>
+        </div>
 
         <!-- Flash messages -->
         <div class="flash-container">
@@ -219,7 +300,7 @@
         <section class="features">
           <h2>Ask a Question</h2>
 
-          <label for="questionInput" class="visually-hidden">Type your question</label>
+          <!-- <label for="questionInput" class="visually-hidden">Type your question</label> -->
           <textarea id="questionInput" class="question-input" placeholder="Enter your question..." rows="2"></textarea>
 
           <div class="mt-3 d-flex align-items-center gap-2">
@@ -298,6 +379,10 @@
 
       <footer>© 2025 StudyAssists | All rights reserved</footer>
     </main>
+
+
+
+
     <!-- /MAIN -->
   </div>
 
@@ -333,6 +418,10 @@
       }
     });
   </script>
+
+
+
+
 
 </body>
 

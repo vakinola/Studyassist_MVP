@@ -260,14 +260,13 @@ document.addEventListener("DOMContentLoaded", () => {
   if (questionInp) {
     questionInp.addEventListener("keydown", (ev) => {
       if (ev.key === "Enter" && !ev.shiftKey) {
-        // Enter alone → add newline (do nothing, allow default)
-        // Optional: you can just return
-        return;
-      } else if (ev.key === "Enter" && ev.shiftKey) {
-        // Shift+Enter → submit
         ev.preventDefault();
         askQuestion();
-      }
+        return;
+      } //else if (ev.key === "Enter" && ev.shiftKey) {
+      // Shift+Enter → submit
+
+      //}
     });
   }
 
@@ -919,4 +918,118 @@ document.addEventListener("DOMContentLoaded", () => {
       icon.classList.add("fa-bars");
     }
   });
+
+
+  // Select all feedback trigger links
+  const feedbackLinks = document.querySelectorAll(".feedback-open");
+  const feedbackModal = document.getElementById("feedback-modal");
+  const feedbackClose = document.getElementById("feedback-close");
+  const feedbackForm = document.getElementById("feedbackForm");
+  const mainContent = document.getElementById("main"); // if modal is inside main
+
+  // Close modal function
+  function closeModal() {
+    feedbackModal.classList.remove("active");
+    if (mainContent) {
+      mainContent.style.overflow = "";
+    } else {
+      document.body.style.overflow = "";
+    }
+  }
+
+  // Open modal on any trigger click
+  feedbackLinks.forEach(link => {
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      feedbackModal.classList.add("active");
+      // Lock scrolling inside main (or body if modal covers entire page)
+      if (mainContent) {
+        mainContent.style.overflow = "hidden";
+      } else {
+        document.body.style.overflow = "hidden";
+      }
+    });
+  });
+
+  // Close modal on cancel button click
+  feedbackClose.addEventListener("click", () => {
+    feedbackModal.classList.remove("active");
+    if (mainContent) {
+      mainContent.style.overflow = "";
+    } else {
+      document.body.style.overflow = "";
+    }
+  });
+
+  // Close modal when clicking outside the modal content
+  feedbackModal.addEventListener("click", (e) => {
+    if (e.target === feedbackModal) {
+      feedbackModal.classList.remove("active");
+      if (mainContent) {
+        mainContent.style.overflow = "";
+      } else {
+        document.body.style.overflow = "";
+      }
+    }
+  });
+
+  // Close modal on pressing ESC key
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      feedbackModal.classList.remove("active");
+      if (mainContent) {
+        mainContent.style.overflow = "";
+      } else {
+        document.body.style.overflow = "";
+      }
+    }
+  });
+
+  feedbackForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const formData = new FormData(feedbackForm);
+
+    try {
+      const response = await fetch("/send-feedback", {
+        method: "POST",
+        body: formData
+      });
+
+      const result = await response.json();
+
+      // Use flash messages instead of alert
+      const flashContainer = document.querySelector(".flash-container");
+      if (flashContainer) {
+        const flash = document.createElement("div");
+        flash.className = `flash flash-${result.status}`;
+        flash.innerHTML = `
+        <span class="flash-message">${result.message}</span>
+        <button class="flash-close" onclick="this.parentElement.remove()" aria-label="Dismiss">×</button>
+      `;
+        flashContainer.appendChild(flash);
+        setTimeout(() => flash.remove(), 5000);
+      }
+
+      if (result.status === "success") {
+        feedbackForm.reset();
+        closeModal();
+      }
+
+    } catch (err) {
+      console.error("Feedback submission failed:", err);
+      // Flash error
+      const flashContainer = document.querySelector(".flash-container");
+      if (flashContainer) {
+        const flash = document.createElement("div");
+        flash.className = "flash flash-error";
+        flash.innerHTML = `
+        <span class="flash-message">Failed to send feedback. Please try again later.</span>
+        <button class="flash-close" onclick="this.parentElement.remove()" aria-label="Dismiss">×</button>
+      `;
+        flashContainer.appendChild(flash);
+        setTimeout(() => flash.remove(), 5000);
+      }
+    }
+  });
+
 }); 
