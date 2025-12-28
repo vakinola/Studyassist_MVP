@@ -52,6 +52,49 @@ document.addEventListener("DOMContentLoaded", () => {
   function setStatus(text) {
     if (statusEl) statusEl.textContent = text;
   }
+  // Smoothly animate the progress bar width (helps fast uploads not "jump")
+  function smoothTo(targetPct, bar, label, phaseText) {
+    if (!bar) return;
+
+    const current = parseFloat(bar.style.width) || 0;
+    const start = performance.now();
+    const duration = 350; // ms
+
+    function step(t) {
+      const p = Math.min(1, (t - start) / duration);
+      const val = current + (targetPct - current) * p;
+
+      bar.style.width = val.toFixed(1) + "%";
+      if (label) label.textContent = `${phaseText}… ${Math.round(val)}%`;
+
+      if (p < 1) requestAnimationFrame(step);
+    }
+
+    requestAnimationFrame(step);
+  }
+
+  function animateUploadTo40(bar, label) {
+    if (!bar) return;
+
+    const start = performance.now();
+    const duration = 450; // ms
+    const from = parseFloat(bar.style.width) || 0; // <-- current!
+    const to = 40;
+
+    function step(t) {
+      const p = Math.min(1, (t - start) / duration);
+      const v = from + (to - from) * p;
+
+      bar.style.width = v.toFixed(1) + "%";
+      if (label) label.textContent = `Uploading… ${Math.round(v)}%`;
+
+      if (p < 1) requestAnimationFrame(step);
+    }
+
+    requestAnimationFrame(step);
+  }
+
+
 
   // --- Elements ---
   const quizRange = $("quizRange");
@@ -366,6 +409,12 @@ document.addEventListener("DOMContentLoaded", () => {
     uploadForm.addEventListener("submit", async (e) => {
       e.preventDefault();
 
+      // Stop any previous poller before starting a new upload
+      if (window.__progressPoller) {
+        clearInterval(window.__progressPoller);
+        window.__progressPoller = null;
+      }
+
       const fileInput = document.getElementById("fileInput");
       const file = fileInput?.files?.[0];
       //if (!file) { alert("Please choose a file first!"); return; }
@@ -380,6 +429,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!j.ok) { alert("Could not start job"); return; }
       const jobId = j.job_id;
 
+
       // 2) Show progress bar
       const wrap = document.getElementById("buildProgress");
       const bar = document.getElementById("buildBar");
@@ -392,24 +442,45 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       if (label) label.textContent = "Uploading… 0%";
 
-      // Start poller
-      startProgressPoller(jobId);
-
       // 3) Upload file via XHR
       const formData = new FormData();
       formData.append("file", file);
 
       const xhr = new XMLHttpRequest();
-      xhr.addEventListener("load", () => {
-        // Upload finished, but server processing may continue.
-        // Let the poller handle showing container & reload.
+
+      // Upload byte-progress drives 0..40%
+      xhr.upload.addEventListener("progress", (evt) => {
+        console.log("UPLOAD EVENT:", evt.loaded, "/", evt.total, "lengthComputable:", evt.lengthComputable);
+        if (!evt.lengthComputable) return;
+
+        const raw = (evt.loaded / evt.total) * 100;  // 0..100
+        const mapped = raw * 0.40;                   // 0..40
+
+        if (bar) bar.style.width = mapped.toFixed(1) + "%";
+        if (label) label.textContent = `Uploading… ${Math.round(mapped)}%`;
       });
+
+      // Animate the upload showing slower progression
+      xhr.addEventListener("load", () => {
+        // If upload was instant, animate 0→40 so it doesn't look like a snap
+        animateUploadTo40(bar, label);
+
+        // Start server progress after that brief animation
+        setTimeout(() => {
+          if (label) label.textContent = "Processing… 40%";
+          startProgressPoller(jobId);
+        }, 650);
+      });
+
+
       xhr.addEventListener("error", () => {
         if (label) label.textContent = "Upload error!";
         if (bar) bar.classList.add("bg-danger");
       });
+
       xhr.open("POST", uploadForm.action, true);
       xhr.setRequestHeader("X-Job-Id", jobId);
+      xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
       xhr.send(formData);
     });
   }
@@ -425,8 +496,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     buildProgress.style.display = "block";
     buildBar.classList.remove("bg-danger");
-    //buildBar.style.backgroundColor = "#22c55e";
-    buildBar.style.backgroundColor = "#1e4ea8";
 
     const stop = () => { clearInterval(window.__progressPoller); window.__progressPoller = null; };
 
@@ -442,9 +511,18 @@ document.addEventListener("DOMContentLoaded", () => {
         buildLabel.textContent = `${data.phase || "Working"}… ${pct}%`;
 
         const phase = (data.phase || "").toLowerCase();
+
+        if (phase === "processing" || phase === "summarizing" || phase === "queued") {
+          buildBar.classList.add("processing");
+        } else {
+          buildBar.classList.remove("processing");
+        }
+
         if (phase === "completed") {
           stop();
+          buildBar.classList.remove("processing");
           buildLabel.textContent = "Completed 100%";
+
 
           // ✅ Show uploaded files container
           const uploadedContainer = document.getElementById("uploadedFilesContainer");
@@ -455,6 +533,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         } else if (phase === "error") {
           stop();
+          buildBar.classList.remove("processing");
           buildLabel.textContent = `Error: ${data.error || "Unknown error"}`;
           buildBar.classList.add("bg-danger");
         }
@@ -471,7 +550,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Auto-start when page already has a job id (e.g., /generate)
   const initialJobId = document.body?.dataset?.jobId || "";
-  if (initialJobId) startProgressPoller(initialJobId);
+  const wrap = document.getElementById("buildProgress");
+  if (initialJobId && wrap && getComputedStyle(wrap).display !== "none" && !window.__progressPoller) {
+    startProgressPoller(initialJobId);
+  }
+
+
+
 
 
 
