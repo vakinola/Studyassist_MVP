@@ -255,12 +255,22 @@ ul.nav>li>a.active {
 }
 
 .progress-bar {
-  width: 100%;
-  background: #dce3f7;
+  width: 0%;
+  height: 10px;
+  background: #1e4ea8;
   border-radius: 20px;
   overflow: hidden !;
-  height: 10px;
-  margin: 5px 0px;
+  transition: width 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.progress-bar.processing {
+  animation: pulse 1.2s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.85; }
+  50% { opacity: 1; }
+  100% { opacity: 0.85; }
 }
 
 .progress-fill {

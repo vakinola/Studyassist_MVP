@@ -68,6 +68,26 @@ ALLOWED_EXTENSIONS = {"pdf", "docx", "txt", "pptx"}
 
 
 # ---------- Helpers ----------
+
+#helpers for logging
+log = logging.getLogger("timing")
+log.setLevel(logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(message)s"
+)
+
+class Timer:
+    def __init__(self, name):
+        self.name = name
+        self.start = time.perf_counter()
+
+    def done(self, extra=""):
+        elapsed = time.perf_counter() - self.start
+        log.info("[TIMER] %-20s %7.3fs %s", self.name, elapsed, extra)
+        return elapsed
+
+
 def allowed_file(filename: str) -> bool:
     """Check extension against the allowed set."""
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -180,7 +200,7 @@ def _process_job(job_id: str, text: str, persist_dir: str, filename: str, start_
         vectordb = Chroma(embedding_function=embeddings, persist_directory=persist_dir)
 
         total = max(len(docs), 1)
-        batch = 50
+        batch = 10
         added = 0
         for i in range(0, len(docs), batch):
             chunk = docs[i:i + batch]
@@ -188,6 +208,11 @@ def _process_job(job_id: str, text: str, persist_dir: str, filename: str, start_
             added += len(chunk)
             local_pct = 10 + (65 * added / total)  # 10→75 locally
             PROGRESS[job_id] = {"phase": f"Processing", "pct": scale(local_pct)}
+
+        PROGRESS[job_id] = {"phase": "Processing", "pct": scale(20)}
+
+        PROGRESS[job_id] = {"phase": "Processing", "pct": scale(30)}
+
 
         # Summarize
         PROGRESS[job_id] = {"phase": "Summarizing", "pct": scale(90)}
@@ -203,7 +228,7 @@ def _process_job(job_id: str, text: str, persist_dir: str, filename: str, start_
             "Title: at the beginning of the notebook title"
             "Then add two newline characters (\\n\\n).\n"
             "After that, write the rest of the summary"
-            "The summary should never be more that 3 sentences"
+            "The summary should never be more that 2 sentences"
             "Be precise, avoid opinions, and summarize the main points in a clear and structured way. "
             "If the document has multiple sections, break it into meaningful segments."
         )
@@ -350,7 +375,7 @@ def generate():
         phase = (st.get("phase") or "").lower()
         if phase == "completed" and st.get("summary"):
             docs = session.get("docs", {})
-            filename = st.get("filename" or session.get("uploaded_filename"))
+            filename = st.get("filename") or session.get("uploaded_filename")
             # Save summary per document
             if filename:
                 info = docs.get(filename, {})
@@ -427,28 +452,41 @@ def progress_update():
 
 @app.post("/upload")
 def upload():
-    # Expect the pre-created job_id
-    job_id = session.get("job_id")
+    job_id = request.headers.get("X-Job-Id") or session.get("job_id")
     if not job_id:
-        # fallback: create one if someone posted directly
         job_id = uuid.uuid4().hex
-        PROGRESS[job_id] = {"phase": "Uploading", "pct": 0}
-        session["job_id"] = job_id
 
+    session["job_id"] = job_id
+    PROGRESS.setdefault(job_id, {"phase": "Uploading", "pct": 0})
+
+    # Detect XHR upload (AJAX)
+    is_xhr = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+
+    # Validation
     if "file" not in request.files:
-        flash("No file part in request.", "error")
+        msg = "No file part in request."
+        if is_xhr:
+            return jsonify(ok=False, error=msg), 400
+        flash(msg, "error")
         return redirect(url_for("generate"))
 
     f = request.files["file"]
+
     if f.filename == "":
-        flash("No file selected.", "error")
+        msg = "No file selected."
+        if is_xhr:
+            return jsonify(ok=False, error=msg), 400
+        flash(msg, "error")
         return redirect(url_for("generate"))
 
     if not allowed_file(f.filename):
-        flash("Unsupported file type. Please upload PDF, DOCX, or TXT.", "error")
+        msg = "Unsupported file type. Please upload PDF, DOCX, PPTX or TXT."
+        if is_xhr:
+            return jsonify(ok=False, error=msg), 400
+        flash(msg, "error")
         return redirect(url_for("generate"))
 
-    # Save + extract
+    # Save + extract text
     text, base, filename = process_uploaded_file(f)
 
     # Track uploaded list for sidebar
@@ -457,13 +495,13 @@ def upload():
     session["uploaded_files"] = uploaded
 
     # Init session state for this upload
-    persist_dir = os.path.abspath(f"./chroma_db_{base}_{uuid.uuid4().hex[:8]}")
+    persist_dir = os.path.abspath(
+        f"./chroma_db_{base}_{uuid.uuid4().hex[:8]}"
+    )
 
-    #per-document map in the session
     docs = session.get("docs", {})
     docs[filename] = {
         "persist_dir": persist_dir,
-        # summary will be filled after _process_job completes
     }
     session["docs"] = docs
     session["persist_directory"] = persist_dir
@@ -471,18 +509,33 @@ def upload():
     session["summary_text"] = None
     session["summary_generated"] = False
 
-    #start background processing for this file
-    PROGRESS[job_id] = {"phase": "queued", "pct": 40, "filename": filename}
-    t = Thread(target=_process_job, args=(job_id, text, persist_dir, filename, 40, 100), daemon=True)
+    # Start background processing
+    PROGRESS[job_id] = {
+        "phase": "queued",
+        "pct": 40,
+        "filename": filename
+    }
+
+    t = Thread(
+        target=_process_job,
+        args=(job_id, text, persist_dir, filename, 40, 100),
+        daemon=True
+    )
     t.start()
 
-    app.logger.info("X-Job-Id seen by /upload: %s", request.headers.get("X-Job-Id"))
+    app.logger.info(
+        "XHR=%s X-Job-Id=%s",
+        is_xhr,
+        request.headers.get("X-Job-Id")
+    )
+    # Response
+    if is_xhr:
+        return jsonify(
+            ok=True,
+            job_id=job_id,
+            filename=filename
+        ), 200
 
-    # Keep identifiers for the generate page
-    #session["job_id"] = job_id
-    #session["uploaded_filename"] = filename
-
-    # Go to the generate page so the JS can poll /progress/<job_id>
     return redirect(url_for("generate"))
 
 
@@ -490,7 +543,11 @@ def upload():
 def get_progress(job_id):
     st = PROGRESS.get(job_id, {"phase": "queued", "pct": 0})
     app.logger.debug("PROGRESS[%s] -> %s", job_id, st)
-    return jsonify(st)
+
+    resp = jsonify(st)
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
+
 
 
 @app.route("/ask", methods=["POST"])
@@ -540,28 +597,49 @@ def ask():
 #Generate multiple-choice questions from the vector DB.
 @app.route("/generate_quiz", methods=["POST"])
 def generate_quiz():
+    t_total = Timer("generate_quiz TOTAL")
+
+    # ----------------------------
+    t_request = Timer("parse request")
     data = request.get_json(silent=True) or {}
     num = int(data.get("num_questions", 5))
     filename = data.get("filename")
+    t_request.done(f"(num={num})")
 
+    # ----------------------------
+    t_session = Timer("session lookup")
     # Look up persist_dir by filename
     docs = session.get("docs", {})
     info = docs.get(filename or "", {})
     persist_dir = info.get("persist_dir") if info else None
+    t_session.done()
+
     if not persist_dir or not os.path.isdir(persist_dir):
         return jsonify({"ok": False, "error": "Please select a Notebook before generating Quiz."}), 400
 
+    # ----------------------------
+    t_vectordb = Timer("load vector DB")
     client = get_openai_client()
     embeddings = OpenAIEmbeddings(model="text-embedding-3-large", openai_api_key=client.api_key)
     vectordb = Chroma(embedding_function=embeddings, persist_directory=persist_dir)
-
+    t_vectordb.done()
+    
+    # ----------------------------
+    t_fetch = Timer("fetch documents")
     raw = vectordb.get(include=["documents"])
     # Use at least 20 documents selection when available
     all_docs = raw.get("documents", [])
+    t_fetch.done(f"(docs={len(all_docs)})")
+
+    # ----------------------------
+    t_sample = Timer("sample documents")
     num_samples = min(20, len(all_docs)) if all_docs else 0
     sample = random.sample(all_docs, num_samples) if num_samples > 0 else []
     context = get_document_prompt(sample) if sample else "No content available."
+    t_sample.done(f"(sampled={num_samples}, chars={len(context)})")
 
+    # ----------------------------
+    t_prompt = Timer("build prompt")
     system_message = (
         f"Generate {num} multiple-choice quiz questions from the following notebook content: "
         f"\n\n###\n{context}\n###\n\n"
@@ -577,13 +655,20 @@ def generate_quiz():
         Question 2: <question>
          ..."""
          )
+    t_prompt.done()
+
+    # ----------------------------
+    t_llm = Timer("LLM generation")
     resp = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[{"role": "system", "content": system_message}],
         temperature=0.2,
     )
-    text = resp.choices[0].message.content.strip()
+    t_llm.done()
 
+    # ----------------------------
+    t_parse = Timer("parse LLM output")
+    text = resp.choices[0].message.content.strip()
     # Parse very simply
     blocks = [b for b in text.split("\n\n") if b.strip()]
     quiz = []
@@ -594,7 +679,10 @@ def generate_quiz():
             choices = lines[1:5]
             correct = lines[5].split(":")[-1].strip()
             quiz.append({"question": q, "choices": choices, "correct": correct})
+    t_parse.done(f"(parsed={len(quiz)})")
 
+    # ----------------------------
+    t_total.done()
     return jsonify({"ok": True, "quiz": quiz})
 
 #for saving results
