@@ -9,3 +9,4 @@ langchain-chroma
 langchain-text-splitters
 python-pptx
 gunicorn
+flask-mail
