@@ -10,6 +10,7 @@ import shutil
 import stat
 import math
 from tempfile import SpooledTemporaryFile
+from pptx import Presentation
 import time
 import random
 import logging
@@ -18,6 +19,7 @@ from datetime import datetime
 from werkzeug.wrappers import Request as WerkzeugRequest
 from tempfile import SpooledTemporaryFile
 from flask.wrappers import Request as FlaskRequest
+from flask_mail import Mail, Message
 PROGRESS = {} 
 
 # LangChain / OpenAI
@@ -44,12 +46,25 @@ app.config["SECRET_KEY"] = (
     or "dev-change-me"
 )
 
+# Flask-Mail config
+app.config.update(
+    MAIL_SERVER="smtp.gmail.com",
+    MAIL_PORT=587,
+    MAIL_USE_TLS=True,
+
+    MAIL_USERNAME=os.getenv("MAIL_USERNAME"),
+    MAIL_PASSWORD=os.getenv("MAIL_PASSWORD"),
+    MAIL_DEFAULT_SENDER=os.getenv("MAIL_USERNAME")
+)
+
+mail = Mail(app)
+
 
 app.config["UPLOAD_FOLDER"] = os.path.join(BASEDIR, "uploads")
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
 # Allowed extensions (unchanged)
-ALLOWED_EXTENSIONS = {"pdf", "docx", "txt"}
+ALLOWED_EXTENSIONS = {"pdf", "docx", "txt", "pptx"}
 
 
 # ---------- Helpers ----------
@@ -76,6 +91,16 @@ def extract_text_from_docx(file_path: str) -> str:
     except Exception as e:
         return f"Error extracting text from DOCX: {e}"
 
+def extract_text_from_pptx(path: str) -> str:
+    prs = Presentation(path)
+    parts = []
+    for i, slide in enumerate(prs.slides, start=1):
+        parts.append(f"\n--- Slide {i} ---\n")
+        for shape in slide.shapes:
+            if hasattr(shape, "text") and shape.text:
+                parts.append(shape.text.strip())
+    return "\n".join(parts).strip()
+
 
 def process_uploaded_file(file_storage):
     """
@@ -91,6 +116,8 @@ def process_uploaded_file(file_storage):
         text = extract_text_from_pdf(save_path)
     elif lower.endswith(".docx"):
         text = extract_text_from_docx(save_path)
+    elif lower.endswith(".pptx"):
+        text = extract_text_from_pptx(save_path)
     elif lower.endswith(".txt"):
         with open(save_path, "r", encoding="utf-8", errors="ignore") as f:
             text = f.read()
@@ -274,14 +301,31 @@ def delete_doc():
         return jsonify(ok=False, error="Selected document not found."), 404
 
     persist_dir = docs[filename].get("persist_dir")
+    if not persist_dir:
+        return jsonify(ok=False, error="No database path stored for this document."), 500
+    
+    #important on Windows
+    persist_dir = os.path.abspath(persist_dir)  
+    app.logger.info("DELETE requested for %s, persist_dir=%s", filename, persist_dir)
 
-    # Delete ONLY the Chroma DB folder
-    if persist_dir and os.path.isdir(persist_dir):
+    if not os.path.isdir(persist_dir):
+        # Don’t pretend it worked
+        return jsonify(ok=False, error=f"Database folder not found: {persist_dir}"), 404
+
+    # Try deleting with retries (Windows file locks)
+    last_err = None
+    for attempt in range(3):
         try:
             shutil.rmtree(persist_dir, onerror=_on_rm_error)
+            last_err = None
+            break
         except Exception as e:
-            app.logger.warning("Failed to remove persist dir %s: %s", persist_dir, e)
-            return jsonify(ok=False, error="Failed to delete database."), 500
+            last_err = e
+            app.logger.warning("rmtree attempt %s failed: %s", attempt + 1, e)
+            time.sleep(0.3)
+
+    if last_err:
+        return jsonify(ok=False, error=f"Failed to delete database: {last_err}"), 500
 
     # Remove from session
     docs.pop(filename, None)
@@ -294,11 +338,7 @@ def delete_doc():
         session.pop("persist_directory", None)
 
     flash(f"Deleted '{filename}' successfully.", "success")
-
     return jsonify(ok=True)
-
-
-
 
 
 #generate questions
@@ -588,6 +628,44 @@ def results():
         "results.html",
         results=session.get("results", [])
     )
+
+@app.route("/send-feedback", methods=["POST"])
+def send_feedback():
+    rating = request.form.get("rating", "N/A")
+    category = request.form.get("category", "N/A")
+    message = request.form.get("message", "").strip()
+
+    if not message:
+        return jsonify({
+            "status": "error",
+            "message": "Message cannot be empty."
+        })
+
+    try:
+        msg = Message(
+            subject=f"Studyassists Feedback — {category}",
+            recipients=["info@studyassists.com"], 
+            body=(
+                f"Rating: {rating}\n"
+                f"Category: {category}\n\n"
+                f"Message:\n{message}"
+            )
+        )
+
+        mail.send(msg)
+
+        return jsonify({
+            "status": "success",
+            "message": "Thank you! Your feedback has been sent."
+        })
+
+    except Exception as e:
+        print("Email error:", e)
+        return jsonify({
+            "status": "error",
+            "message": "Unable to send feedback at this time."
+        })
+
 
 
 
