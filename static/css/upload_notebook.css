@@ -267,9 +267,17 @@ ul.nav>li>a.active {
 }
 
 @keyframes pulse {
-  0% { opacity: 0.85; }
-  50% { opacity: 1; }
-  100% { opacity: 0.85; }
+  0% {
+    opacity: 0.85;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.85;
+  }
 }
 
 .progress-fill {
@@ -527,6 +535,7 @@ span#rangeValue {
 
 #viewScoresBtn {
   margin-top: 10px;
+
 }
 
 textarea {
@@ -547,10 +556,11 @@ textarea::placeholder {
 .mybutton {
   color: #1e4ea8;
   border: none;
-  padding: 10px 20px;
+  padding: 10px 20px !important;
   border-radius: 8px;
   cursor: pointer;
   font-size: 16px;
+  margin-bottom: 10px;
 }
 
 /* Default (your normal blue button) */

@@ -14,11 +14,26 @@
   <!-- End Google Tag Manager -->
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="StudyAssists Homepage - Upload and access study notebooks to enhance learning.">
+  <meta name="description"
+    content="StudyAssists Homepage - StudyAssists.com is an AI-powered learning platform that transforms notes and study materials into interactive quizzes, improving retention and performance. In addition to serving students and educators, the platform supports organizations from corporate companies to training providers by converting internal training content into measurable learning experiences.">
   <meta name="author" content="StudyAssists">
-  <meta name="keywords" content="StudyAssists, study notes, online notebooks, learning resources, student tools">
+  <meta name="keywords"
+    content="AI study assistant, AI note taking app, quiz generator for students, online study tools, study notes organizer, AI exam preparation, studley alternative, smart learning platform, student productivity tools, automatic quiz maker, personalized learning AI, StudyAssists">
+
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>StudyAssists | Home</title>
+  <title>StudyAssists | Home - AI Powered Interactive Learning & Training Platform</title>
+  <link rel="canonical" href="https://studyassists.com/" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "EducationalOrganization",
+    "name": "StudyAssists",
+    "url": "https://www.studyassists.com",
+    "description": "StudyAssists.com is an AI-powered learning platform that transforms notes and study materials into interactive quizzes."
+  }
+  </script>
+
 
   <link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename='img/favicon.png') }}">
 
@@ -28,7 +43,264 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
 
+  <link rel="icon" type="image/svg+xml" href="../static/img/favicon.svg">
+
+
+
+
+
   <script src="{{ url_for('static', filename='js/vendor/modernizr-2.8.3-respond-1.4.2.min.js') }}"></script>
+
+
+  <style>
+    /* Backdrop inside main */
+    .feedback-backdrop {
+      position: fixed;
+      /* was fixed */
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 9999;
+    }
+
+    .feedback-backdrop.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* Modal remains the same */
+    .feedback-modal {
+      background: #fff;
+      border-radius: 16px;
+      padding: 28px;
+      width: 100%;
+      max-width: 420px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+      animation: feedback-scale-in 0.3s ease;
+    }
+
+
+    .feedback-modal *,
+    .feedback-modal *::before,
+    .feedback-modal *::after {
+      box-sizing: border-box;
+    }
+
+
+    @keyframes feedback-scale-in {
+      from {
+        transform: scale(0.95);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .feedback-title {
+      margin: 0;
+      font-size: 1.5rem;
+      color: #111;
+    }
+
+    .feedback-subtitle {
+      margin: 8px 0 20px;
+      color: #555;
+      font-size: 0.95rem;
+    }
+
+    .feedback-label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #333;
+    }
+
+    .feedback-field {
+      margin-bottom: 16px;
+    }
+
+    .feedback-select,
+    .feedback-textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      font-size: 0.95rem;
+    }
+
+    .feedback-textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    /* Rating */
+    .feedback-stars {
+      display: flex;
+      flex-direction: row-reverse;
+      justify-content: flex-end;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .feedback-stars input {
+      display: none;
+    }
+
+    .feedback-stars label {
+      font-size: 1.6rem;
+      color: #ddd;
+      cursor: pointer;
+    }
+
+    .feedback-stars input:checked~label,
+    .feedback-stars label:hover,
+    .feedback-stars label:hover~label {
+      color: #f5b301;
+    }
+
+    /* Actions */
+    .feedback-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .feedback-btn {
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .feedback-cancel {
+      background: #f2f2f2;
+      color: #333;
+    }
+
+    .feedback-send {
+      background: #2c65d1;
+      color: #fff;
+    }
+
+    .feedback-send:hover {
+      background: #1f4fb3;
+    }
+
+    @media (max-width: 600px) {
+
+      .feedback-modal {
+        width: 80%;
+        max-width: 320px;
+        padding: 16px 20px;
+        border-radius: 12px;
+
+      }
+
+      .feedback-select,
+      .feedback-textarea {
+        font-size: .7rem;
+      }
+
+      .feedback-title {
+        font-size: 1.2rem;
+      }
+
+      .feedback-subtitle {
+        font-size: 0.85rem;
+      }
+
+      .feedback-stars label {
+        font-size: 1.6rem;
+        /* smaller stars for touch */
+      }
+
+      .feedback-actions {
+        flex-direction: column-reverse;
+        gap: 8px;
+      }
+
+      .feedback-btn {
+        width: 100%;
+        padding: 8px 12px;
+        font-size: 0.95rem;
+      }
+    }
+
+
+    /* Base flash style */
+    .flash {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      font-family: system-ui, sans-serif;
+      font-size: 0.95rem;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      animation: slideIn 0.3s ease;
+      color: #fff;
+    }
+
+    /* Variants (like Bootstrap: success, error, warning, info) */
+    .flash-success {
+      background-color: #198754;
+    }
+
+    /* green */
+    .flash-error {
+      background-color: #dc3545;
+    }
+
+    /* red */
+    .flash-warning {
+      background-color: #ffc107;
+      color: #212529;
+    }
+
+    /* yellow */
+    .flash-info {
+      background-color: #0dcaf0;
+      color: #212529;
+    }
+
+    /* light blue */
+
+    /* Close button */
+    .flash-close {
+      background: transparent;
+      border: none;
+      color: inherit;
+      font-size: 1.2rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+
+    .flash {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 1s ease, transform 1s ease;
+    }
+
+    .flash.fade-out {
+      opacity: 0;
+      transform: translateY(-10px);
+      /* slightly slide up while fading */
+    }
+  </style>
 </head>
 
 
@@ -65,6 +337,7 @@
               <li><a class="active" href="{{ url_for('home') }}">Home <span class="sr-only">(current)</span></a></li>
               <li><a href="{{ url_for('upload_notebook') }}">Upload Notebook</a></li>
               <li><a href="{{ url_for('results') }}">Results</a></li>
+              <li><a href="#" class="feedback-open">Feedback</a></li>
               <!-- <li><a href="#">Pricing</a></li> -->
             </ul>
           </div>
@@ -78,7 +351,7 @@
       <div class="row hero-inner">
         <div class="col-md-9">
           <div class="hero-content">
-            <h2>Turn Your Notes into Quizzes!</h2>
+            <h1>Turn Your Notes into Quizzes!</h1>
             <p>
               Ace your exams! Upload your lecture notes or study guides, and our AI will
               create practice questions to help you master any subject.
@@ -101,6 +374,65 @@
     </div>
   </section>
 
+  <div class="feedback-backdrop" id="feedback-modal" aria-hidden="true" action="/send-feedback" method="POST">
+    <!-- Modal Form inside the backdrop -->
+    <form class="feedback-modal" id="feedbackForm">
+
+      <h2 class="feedback-title">Give Feedback</h2>
+      <p class="feedback-subtitle">
+        Help us improve <strong>Studyassists</strong> for everyone.
+      </p>
+
+      <!-- Rating -->
+      <div class="feedback-rating">
+        <label class="feedback-label">Rate your experience</label>
+        <div class="feedback-stars">
+
+
+
+
+          <input type="radio" name="rating" id="feedback-star5" value="5">
+          <label for="feedback-star5">★</label>
+          <input type="radio" name="rating" id="feedback-star4" value="4">
+          <label for="feedback-star4">★</label>
+          <input type="radio" name="rating" id="feedback-star3" value="3">
+          <label for="feedback-star3">★</label>
+          <input type="radio" name="rating" id="feedback-star2" value="2">
+          <label for="feedback-star2">★</label>
+          <input type="radio" name="rating" id="feedback-star1" value="1">
+          <label for="feedback-star1">★</label>
+        </div>
+
+      </div>
+
+      <!-- Category -->
+      <div class="feedback-field">
+        <label class="feedback-label">Category</label>
+        <select name="category" class="feedback-select" required>
+          <option value="" disabled selected>Select category</option>
+          <option value="Bug">Bug</option>
+          <option value="Feature Request">Feature Request</option>
+          <option value="UI / UX">UI / UX</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <!-- Message -->
+      <div class="feedback-field">
+        <label class="feedback-label">Message</label>
+        <textarea name="message" class="feedback-textarea" placeholder="Let us know what you think or discovered"
+          required></textarea>
+      </div>
+
+      <!-- Actions -->
+      <div class="feedback-actions">
+        <button type="button" class="feedback-btn feedback-cancel" id="feedback-close">Cancel</button>
+        <button type="submit" class="feedback-btn feedback-send">Send</button>
+      </div>
+
+    </form>
+  </div>
+
   <footer class="footer-section align-center">
     <div class="container">
       <p>&copy; 2025 StudyAssists. All rights reserved.</p>
@@ -112,6 +444,7 @@
   <script src="{{ url_for('static', filename='js/vendor/bootstrap.bundle.min.js') }}"></script>
   <script src="{{ url_for('static', filename='js/vendor/jquery.slicknav.min.js') }}"></script>
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/final.js') }}"></script>
 
   <script>
     document.addEventListener("DOMContentLoaded", function () {
