@@ -506,6 +506,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // Poller handles progress updates
   // ==============================
   function startProgressPoller(jobId) {
+    let lastPct = 0;
+    let lastPhase = "";
     const buildProgress = document.getElementById("buildProgress");
     const buildBar = document.getElementById("buildBar");
     const buildLabel = document.getElementById("buildLabel");
@@ -532,11 +534,28 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         const data = await resp.json();
-        const phase = (data.phase || "").toLowerCase();
-        const pct = Math.max(0, Math.min(100, Number(data.pct || 0)));
+        const phaseRaw = data.phase || "queued";
+        const phase = phaseRaw.toLowerCase();
+        let pct = Math.max(0, Math.min(100, Number(data.pct || 0)));
 
-        // ✅ While client upload is active, ignore server "Uploading" updates < 40
-        if (__clientUploading && phase === "uploading" && pct < 40) return;
+        // Ignore fake "queued 0%" after progress already started
+        if (lastPct > 0 && phase === "queued" && pct === 0) {
+          return;
+        }
+
+        // Never allow progress to move backwards
+        if (pct < lastPct && phase !== "error") {
+          pct = lastPct;
+        }
+
+        // Accept this update
+        lastPct = pct;
+        lastPhase = phase;
+
+        // While client upload is active, ignore server upload < 40
+        if (__clientUploading && phase === "uploading" && pct < 40) {
+          return;
+        }
 
         buildBar.style.width = pct + "%";
         buildLabel.textContent = `${data.phase || "Working"}… ${pct}%`;
@@ -556,7 +575,7 @@ document.addEventListener("DOMContentLoaded", () => {
           const uploadedContainer = document.getElementById("uploadedFilesContainer");
           if (uploadedContainer) uploadedContainer.style.display = "block";
 
-          // 🔓 Re-enable submit button
+          // Re-enable submit button
           uploadForm?.querySelector('button[type="submit"]')?.removeAttribute("disabled");
 
           setTimeout(() => location.reload(), 400);

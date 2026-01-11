@@ -201,7 +201,7 @@ def _process_job(job_id: str, text: str, persist_dir: str, filename: str, start_
         vectordb = Chroma(embedding_function=embeddings, persist_directory=persist_dir)
 
         total = max(len(docs), 1)
-        batch = 50
+        batch = 25
         added = 0
         for i in range(0, len(docs), batch):
             chunk = docs[i:i + batch]
@@ -485,18 +485,14 @@ def upload():
 
 @app.get("/progress/<job_id>")
 def get_progress(job_id):
-    st = PROGRESS.get(job_id, {"phase": "queued", "pct": 0})
+    st = PROGRESS.get(job_id)
+    if not st:
+        # IMPORTANT: don't send {"queued":0} fallback, it causes UI jumps
+        return jsonify({"ok": False, "missing": True, "phase": "missing", "pct": 0}), 404
 
-    # Never allow pct to go backwards (safety)
-    prev = PROGRESS.get(job_id, {})
-    if "pct" in prev and "pct" in st:
-        st["pct"] = max(int(prev.get("pct", 0)), int(st.get("pct", 0)))
-
-    resp = jsonify(st)
+    resp = jsonify({"ok": True, **st})
     resp.headers["Cache-Control"] = "no-store"
     return resp
-
-
 
 
 
