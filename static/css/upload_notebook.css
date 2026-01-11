@@ -491,6 +491,12 @@ ul li {
 .features h2 {
   color: rgba(0, 0, 0, 0.8);
   margin-bottom: 10px;
+
+}
+
+.features h2 {
+
+  margin-bottom: 0px !important;
 }
 
 .range-labels,
@@ -563,26 +569,36 @@ textarea::placeholder {
   margin-bottom: 10px;
 }
 
-/* Default (your normal blue button) */
-.mybutton:not(.btn-danger):not(.btn-success):not(.btn-warning):not(.btn-info) {
+
+.exportpdf,
+.viewscores {
+  color: white;
+  border: none;
+  padding: 10px 20px !important;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-bottom: 10px;
   background-color: #1e4ea8;
 }
 
-.mybutton:hover:not(.btn-danger):not(.btn-success):not(.btn-warning):not(.btn-info) {
-  background-color: #2474ff;
-  transition: all 0.5s;
-}
-
-.btn-danger.mybutton {
+.deletebtn {
+  color: white;
+  border: none;
+  padding: 10px 20px !important;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-bottom: 10px;
   background-color: #dc3545;
-  border-color: #dc3545;
-  color: #fff;
 }
 
-.btn-danger.mybutton:hover {
+.deletebtn:hover {
   background-color: #b02a37;
   border-color: #b02a37;
 }
+
+
 
 .warning {
   color: #ff7a00;

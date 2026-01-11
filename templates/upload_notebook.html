@@ -159,7 +159,7 @@
                 {% endif %}
               </ul>
 
-              <button id="deleteDocBtn" type="button" class="btn btn-outline-secondary flex-fill mybutton deletebtn">
+              <button id="deleteDocBtn" type="button" class="btn btn-outline-secondary flex-fill  deletebtn">
                 Delete
               </button>
             </div>
@@ -319,7 +319,7 @@
           <textarea id="questionInput" class="question-input" placeholder="Enter your question..." rows="2"></textarea>
 
           <div class="mt-3 d-flex align-items-center gap-2">
-            <button id="askBtn" type="button" class="" btn btn-primary mybutton">Submit</button>
+            <button id="askBtn" type="button" class=" btn btn-primary mybutton">Submit</button>
             <small id="opStatus" class="text-muted" aria-live="polite" role="status"></small>
           </div>
           {% if answer %}
@@ -361,7 +361,7 @@
 
             <div id="quizResults" class="mt-2" aria-live="polite" role="status"></div>
 
-            <button id="viewScoresBtn" class="result-hidden mybutton mt-2" onclick="window.location.href='/results'">
+            <button id="viewScoresBtn" class="result-hidden viewscores mt-2" onclick="window.location.href='/results'">
               View My Scores
             </button>
 

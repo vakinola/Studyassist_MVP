@@ -773,7 +773,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!exportDiv) return;
 
     exportDiv.innerHTML = `
-    <button id="exportPdfBtn" class="btn btn-outline-secondary mybutton">
+    <button id="exportPdfBtn" class="btn btn-outline-secondary exportpdf">
       Export PDF
     </button>
   `;
