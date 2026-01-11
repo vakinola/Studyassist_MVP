@@ -17,13 +17,36 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description"
-        content="StudyAssists Generate Quiz - Upload and access study notebooks to enhance learning." />
+        content="View quiz results and performance insights with StudyAssists. Analyze answers, track learning progress, identify knowledge gaps, and measure learning outcomes from AI-generated quizzes.">
     <meta name="robots" content="index, follow" />
-    <title>StudyAssists | Results </title>
+    <meta name="author" content="StudyAssists">
+    <meta name="keywords"
+        content="AI study assistant, AI note taking app, quiz generator for students, online study tools, study notes organizer, AI exam preparation, studley alternative, smart learning platform, student productivity tools, automatic quiz maker, personalized learning AI, StudyAssists">
+
+
+    <title>StudyAssists | - AI Powered Interactive Learning & Training Platform</title>
+
+    <link rel="canonical" href="https://studyassists.com/results" />
+
 
     <!-- Page CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/generate.css') }}" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/font-awesome.min.css') }}" />
+
+
+    <link rel="icon" type="image/svg+xml" href="../static/img/favicon.svg">
+
+    <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "EducationalOrganization",
+    "name": "StudyAssists",
+    "url": "https://www.studyassists.com",
+    "description": "StudyAssists.com is an AI-powered learning platform that transforms notes and study materials into interactive quizzes."
+  }
+  </script>
+
+
     <style>
     </style>
 </head>
@@ -53,6 +76,7 @@
                             <li><a href="{{ url_for('index') }}">Home</a></li>
                             <li><a class="active" href="{{ url_for('generate') }}">Upload Notebook</a></li>
                             <li><a href="{{ url_for('results') }}">Results</a></li>
+                            <li><a href="#" class="feedback-open">Feedback</a></li>
                         </ul>
                     </div>
                 </div>
@@ -102,6 +126,21 @@
 
             <div class="results_container">
 
+                <!-- Flash messages -->
+                <div class="flash-container">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                    {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">
+                        <span class="flash-message">{{ message|safe }}</span>
+                        <button class="flash-close" onclick="this.parentElement.remove()"
+                            aria-label="Dismiss">×</button>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+                    {% endwith %}
+                </div>
+
                 <h2> Results</h2>
                 <div class="table_wrapper">
 
@@ -116,19 +155,87 @@
                             </tr>
                         </thead>
                         <tbody>
+                            {% if results %}
                             {% for result in results %}
                             <tr>
                                 <td data-label="Uploaded File">{{ result.filename }}</td>
                                 <td data-label="Score" class="score">{{ result.correct }}/{{ result.total }}</td>
                                 <td data-label="Percentage" class="score">{{ result.percent }}%</td>
                                 <td data-label="Date & Time">{{ result.test_datetime }}</td>
-
                             </tr>
                             {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td colspan="4" style="text-align: left; padding: 20px; font-weight: 500;">
+                                    No result currently available. Do a <a href="{{ url_for('generate') }}"> Quiz </a>
+                                    to generate one
+                                </td>
+                            </tr>
+                            {% endif %}
                         </tbody>
+
                     </table>
                 </div>
 
+            </div>
+
+            <div class="feedback-backdrop" id="feedback-modal" aria-hidden="true" action="/send-feedback" method="POST">
+                <!-- Modal Form inside the backdrop -->
+                <form class="feedback-modal" id="feedbackForm">
+
+                    <h2 class="feedback-title">Give Feedback</h2>
+                    <p class="feedback-subtitle">
+                        Help us improve <strong>Studyassists</strong> for everyone.
+                    </p>
+
+                    <!-- Rating -->
+                    <div class="feedback-rating">
+                        <label class="feedback-label">Rate your experience</label>
+                        <div class="feedback-stars">
+
+
+
+
+                            <input type="radio" name="rating" id="feedback-star5" value="5">
+                            <label for="feedback-star5">★</label>
+                            <input type="radio" name="rating" id="feedback-star4" value="4">
+                            <label for="feedback-star4">★</label>
+                            <input type="radio" name="rating" id="feedback-star3" value="3">
+                            <label for="feedback-star3">★</label>
+                            <input type="radio" name="rating" id="feedback-star2" value="2">
+                            <label for="feedback-star2">★</label>
+                            <input type="radio" name="rating" id="feedback-star1" value="1">
+                            <label for="feedback-star1">★</label>
+                        </div>
+
+                    </div>
+
+                    <!-- Category -->
+                    <div class="feedback-field">
+                        <label class="feedback-label">Category</label>
+                        <select name="category" class="feedback-select" required>
+                            <option value="" disabled selected>Select category</option>
+                            <option value="Bug">Bug</option>
+                            <option value="Feature Request">Feature Request</option>
+                            <option value="UI / UX">UI / UX</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <!-- Message -->
+                    <div class="feedback-field">
+                        <label class="feedback-label">Message</label>
+                        <textarea name="message" class="feedback-textarea"
+                            placeholder="Let us know what you think or discovered" required></textarea>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="feedback-actions">
+                        <button type="button" class="feedback-btn feedback-cancel" id="feedback-close">Cancel</button>
+                        <button type="submit" class="feedback-btn feedback-send">Send</button>
+                    </div>
+
+                </form>
             </div>
 
             <footer>© 2025 StudyAssists | All rights reserved</footer>

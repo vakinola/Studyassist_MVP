@@ -713,59 +713,185 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function attachExportButtons() {
     if (!exportDiv) return;
+
     exportDiv.innerHTML = `
-      <h6 class="mt-2">📤 Export Options</h6>
-      <button id="exportCsvBtn" class="btn btn-outline-secondary me-2 mybutton">Export CSV</button>
-      <button id="exportPdfBtn" class="btn btn-outline-secondary mybutton">Export PDF</button>
-    `;
-    const exportCsvBtn = $("exportCsvBtn");
+    <button id="exportPdfBtn" class="btn btn-outline-secondary mybutton">
+      Export PDF
+    </button>
+  `;
+
     const exportPdfBtn = $("exportPdfBtn");
+    if (!exportPdfBtn) return;
 
-    if (exportCsvBtn) {
-      exportCsvBtn.addEventListener("click", () => {
-        if (!lastQuiz.length || !window.Papa) return;
-        const rows = lastQuiz.map((q) => ({
-          question: q.question,
-          choiceA: q.choices?.[0] || "",
-          choiceB: q.choices?.[1] || "",
-          choiceC: q.choices?.[2] || "",
-          choiceD: q.choices?.[3] || "",
-          correct: q.correct || "",
-        }));
-        const csv = Papa.unparse(rows);
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "quiz.csv";
-        a.click();
-        URL.revokeObjectURL(url);
-      });
-    }
+    exportPdfBtn.addEventListener("click", () => {
+      if (!lastQuiz.length || !window.jspdf) {
+        showAlert("PDF export not available.", "warning");
+        return;
+      }
 
-    if (exportPdfBtn) {
-      exportPdfBtn.addEventListener("click", () => {
-        if (!lastQuiz.length || !window.jspdf) return;
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        let y = 10;
-        doc.setFontSize(12);
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: "mm", format: "a4" });
 
-        lastQuiz.forEach((q, i) => {
-          const qLines = doc.splitTextToSize(`${i + 1}. ${q.question}`, 180);
-          doc.text(qLines, 10, y); y += qLines.length * 6 + 2;
-          (q.choices || []).forEach((c) => {
-            const cl = doc.splitTextToSize(`- ${c}`, 175);
-            doc.text(cl, 14, y); y += cl.length * 6 + 1;
-          });
-          doc.text(`Answer: ${q.correct}`, 10, y); y += 10;
-          if (y > 270) { doc.addPage(); y = 10; }
+      const answeredCount =
+        quizList?.querySelectorAll('input[type="radio"]:checked').length || 0;
+      const hasAnswers = answeredCount > 0;
+
+      const pageBottom = 280;
+      let yPos = 22;
+
+      let filename = getSelectedDocName() || "quiz";
+      const displayTitle = filename.replace(/\.pdf$/i, "");
+
+      // ================= Header =================
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.text(`Title: ${displayTitle}`, 10, 15);
+
+      if (hasAnswers && quizResults?.innerHTML.includes("Your Score")) {
+        const m = quizResults.innerHTML.match(/(\d+)\/(\d+).*?(\d+)%/);
+        if (m) {
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(12);
+          doc.text(`Score: ${m[1]}/${m[2]} (${m[3]}%)`, 10, 22);
+          yPos = 30;
+        }
+      }
+
+      // ================= Questions =================
+      lastQuiz.forEach((q, qIndex) => {
+        const cleanQuestion = (q.question || "").replace(
+          /^\s*(question\s*\d+[:.)-]?\s*)/i,
+          ""
+        );
+
+        const item = quizList?.querySelector(
+          `.list-group-item:nth-child(${qIndex + 1})`
+        );
+        const selected = item?.querySelector("input:checked")?.value?.toUpperCase();
+        const correct = (
+          item?.dataset.correct ||
+          q.correct ||
+          ""
+        ).replace(/[^A-D]/gi, "").toUpperCase();
+
+        const isCorrect = selected && selected === correct;
+
+        // ---- Estimate space needed ----
+        let estimatedHeight = 10 + (q.choices?.length || 0) * 7;
+        if (hasAnswers && selected) estimatedHeight += 10;
+        if (hasAnswers && q.explanation) estimatedHeight += 8;
+
+        if (yPos + estimatedHeight > pageBottom) {
+          doc.addPage();
+          yPos = 15;
+        }
+
+        // ---- Question ----
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(11);
+        const qLines = doc.splitTextToSize(
+          `Question ${qIndex + 1}: ${cleanQuestion}`,
+          180
+        );
+        doc.text(qLines, 10, yPos);
+        yPos += qLines.length * 5 + 3;
+
+        // ---- Choices ----
+        q.choices.forEach((choice, i) => {
+          const letter = String.fromCharCode(65 + i);
+          const text = choice.replace(/^[A-D]\)\s*/i, "");
+
+          let color = [0, 0, 0];
+          let weight = "normal";
+
+          if (hasAnswers) {
+            if (letter === correct) {
+              color = [34, 197, 94];
+              weight = "bold";
+            }
+            if (selected === letter && !isCorrect) {
+              color = [239, 68, 68];
+              weight = "bold";
+            }
+          }
+
+          doc.setFont("helvetica", weight);
+          doc.setTextColor(...color);
+
+          const lines = doc.splitTextToSize(`${letter}. ${text}`, 165);
+          doc.text(lines, 15, yPos);
+          yPos += lines.length * 4 + 2;
+
+          doc.setTextColor(0, 0, 0);
+          doc.setFont("helvetica", "normal");
         });
 
-        doc.save("quiz.pdf");
+        // ---- Feedback ----
+        if (hasAnswers && selected) {
+          doc.setFontSize(10);
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(
+            isCorrect ? 34 : 239,
+            isCorrect ? 197 : 68,
+            isCorrect ? 94 : 68
+          );
+          doc.text(
+            `Your answer: ${selected}    Correct answer: ${correct}`,
+            15,
+            yPos
+          );
+          yPos += 6;
+          doc.setTextColor(0, 0, 0);
+        }
+
+        // ---- Explanation ----
+        if (hasAnswers && q.explanation) {
+          doc.setFontSize(9);
+          doc.setFont("helvetica", "italic");
+          doc.setTextColor(90, 90, 90);
+          const exp = doc.splitTextToSize(
+            `Explanation: ${q.explanation}`,
+            165
+          );
+          doc.text(exp, 15, yPos);
+          yPos += exp.length * 4 + 3;
+          doc.setTextColor(0, 0, 0);
+        }
+
+        yPos += 5;
       });
-    }
+
+      // ================= Answer Key =================
+      if (!hasAnswers) {
+        doc.addPage();
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(14);
+        doc.text("Answer Key", 10, 15);
+
+        let y = 25;
+        lastQuiz.forEach((q, i) => {
+          const correct = (q.correct || "")
+            .replace(/[^A-D]/gi, "")
+            .toUpperCase();
+          doc.setFontSize(11);
+          doc.setFont("helvetica", "normal");
+          doc.text(`Question ${i + 1}: ${correct}`, 10, y);
+          y += 6;
+          if (y > pageBottom) {
+            doc.addPage();
+            y = 15;
+          }
+        });
+      }
+
+      doc.save(`${displayTitle}_quiz.pdf`);
+    });
   }
+
+
+
+
+
 
   function clearPreviousQuiz() {
     lastQuiz = [];

@@ -15,14 +15,39 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description"
-    content="StudyAssists Generate Quiz - Upload and access study notebooks to enhance learning." />
+    content="StudyAssists Generate Quiz uses AI to instantly convert notes, documents, and training materials into interactive quizzes. Improve knowledge retention, assess learning outcomes, and create measurable learning experiences for students, educators, and organizations.">
+
+  <meta name="keywords"
+    content="AI study assistant, AI note taking app, quiz generator for students, online study tools, study notes organizer, AI exam preparation, studley alternative, smart learning platform, student productivity tools, automatic quiz maker, personalized learning AI, StudyAssists">
+
   <meta name="robots" content="index, follow" />
-  <title>StudyAssists | Generate-Quiz</title>
+
+  <link rel="canonical" href="https://studyassists.com/generate-quiz" />
+
+
+
+  <title>StudyAssists | Generate-Quiz - AI Powered Interactive Learning & Training Platform</title>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "EducationalOrganization",
+    "name": "StudyAssists",
+    "url": "https://www.studyassists.com",
+    "description": "StudyAssists.com is an AI-powered learning platform that transforms notes and study materials into interactive quizzes."
+  }
+  </script>
+
 
   <!-- Page CSS -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/generate.css') }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/font-awesome.min.css') }}" />
+
+
+  <link rel="icon" type="image/svg+xml" href="../static/img/favicon.svg">
+
+
 
   <style>
   </style>
@@ -250,18 +275,6 @@
       <div class="mobile_padding">
 
 
-        <div class="marquee-container">
-          <div class="marquee-track">
-            <span>
-              Your input helps us build better features. &nbsp; • &nbsp;
-              Leave a
-              <a href="#" class="feedback-open">
-                Feedback
-              </a>
-              &nbsp; •
-            </span>
-          </div>
-        </div>
 
         <!-- Flash messages -->
         <div class="flash-container">
@@ -351,7 +364,9 @@
             </button>
 
             <!-- Export controls injected by JS -->
-            <div id="export-options" class="mt-2"></div>
+            <div id="export-options" class="mt-2">
+
+            </div>
           </div>
         </section>
 

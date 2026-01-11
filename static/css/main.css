@@ -406,8 +406,9 @@ ul.nav>li>a.active {
   z-index: -1;
 }
 
-.hero-content h2 {
+.hero-content h1 {
   margin-bottom: 20px;
+  font-size: 41px;
 }
 
 .hero-content p {
@@ -478,7 +479,9 @@ ul.nav>li>a.active {
 }
 
 
-
+#navmenu li {
+  cursor: pointer;
+}
 
 
 /*Mockup Animation*/
@@ -561,6 +564,11 @@ ul.nav>li>a.active {
   body {
     width: 100%;
     max-width: 100%;
+  }
+
+  .hero-content h1 {
+    margin-bottom: 20px;
+    font-size: 30px;
   }
 
 
