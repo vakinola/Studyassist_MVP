@@ -52,6 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function setStatus(text) {
     if (statusEl) statusEl.textContent = text;
   }
+  /*
   // Smoothly animate the progress bar width (helps fast uploads not "jump")
   function smoothTo(targetPct, bar, label, phaseText) {
     if (!bar) return;
@@ -92,7 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     requestAnimationFrame(step);
-  }
+  } */
 
 
 
@@ -398,15 +399,16 @@ document.addEventListener("DOMContentLoaded", () => {
   // ------------------------------------
   // Handle upload with real progress (0–40%)
   // ------------------------------------
-  // Single-source progress via /progress/<job_id>
-  //  - Create job first (/init_upload) so poller can start
-  //  - Report upload % to server (/progress_update)
-  //  - Server background thread continues with same job_id
-  // ------------------------------------
+  let __clientUploadPct = 0;        // 0..40 from xhr.upload
+  let __clientUploading = false;    // true while XHR upload is in progress
+
   const uploadForm = document.getElementById("uploadForm");
   if (uploadForm) {
     uploadForm.addEventListener("submit", async (e) => {
       e.preventDefault();
+      // Abort any previous upload XHR
+      window.__currentUploadXhr?.abort();
+      window.__currentUploadXhr = null;
 
       // Stop any previous poller before starting a new upload
       if (window.__progressPoller) {
@@ -422,57 +424,72 @@ document.addEventListener("DOMContentLoaded", () => {
         showModal("Please choose a file first!");
         return;
       }
+      //Disable submit button during upload
+      uploadForm
+        .querySelector("button[type=submit]")
+        ?.setAttribute("disabled", "true");
+
 
       // 1) Create job_id before uploading
       const j = await fetch("/init_upload", { method: "POST" }).then(r => r.json());
-      if (!j.ok) { alert("Could not start job"); return; }
+      if (!j.ok) { showModal("Could not start job"); return; }
       const jobId = j.job_id;
 
-
-      // 2) Show progress bar
+      // 2) Show progress bar UI
       const wrap = document.getElementById("buildProgress");
       const bar = document.getElementById("buildBar");
       const label = document.getElementById("buildLabel");
+
       if (wrap) wrap.style.display = "block";
       if (bar) {
         bar.classList.remove("bg-danger");
-        bar.style.backgroundColor = "#22c55e";
+        bar.classList.add("processing");
         bar.style.width = "0%";
       }
       if (label) label.textContent = "Uploading… 0%";
 
-      // 3) Upload file via XHR
+      // ✅ 3) Start polling RIGHT NOW (server-side upload progress)
+      startProgressPoller(jobId);
+
+      // 4) Upload via XHR (WITH client-side progress)
       const formData = new FormData();
       formData.append("file", file);
 
+      __clientUploadPct = 0;
+      __clientUploading = true;
+
       const xhr = new XMLHttpRequest();
+      window.__currentUploadXhr = xhr;
 
-      // Upload byte-progress drives 0..40%
-      xhr.upload.addEventListener("progress", (evt) => {
-        console.log("UPLOAD EVENT:", evt.loaded, "/", evt.total, "lengthComputable:", evt.lengthComputable);
-        if (!evt.lengthComputable) return;
 
-        const raw = (evt.loaded / evt.total) * 100;  // 0..100
-        const mapped = raw * 0.40;                   // 0..40
+      xhr.upload.onprogress = (e) => {
+        if (!e.lengthComputable) return;
 
-        if (bar) bar.style.width = mapped.toFixed(1) + "%";
-        if (label) label.textContent = `Uploading… ${Math.round(mapped)}%`;
-      });
+        const frac = e.loaded / e.total;                 // 0..1
+        const pct = Math.max(1, Math.floor(frac * 40));  // 1..40
+        __clientUploadPct = pct;
 
-      // Animate the upload showing slower progression
+        // IMPORTANT: update UI directly here for buttery smooth upload
+        if (bar) bar.style.width = pct + "%";
+        if (label) label.textContent = `Uploading… ${pct}%`;
+      };
+
       xhr.addEventListener("load", () => {
-        // If upload was instant, animate 0→40 so it doesn't look like a snap
-        animateUploadTo40(bar, label);
+        // Upload finished (server processing will take over 40->100)
+        __clientUploading = false;
 
-        // Start server progress after that brief animation
-        setTimeout(() => {
-          if (label) label.textContent = "Processing… 40%";
-          startProgressPoller(jobId);
-        }, 650);
+        // If upload completed too fast, force bar to 40 immediately
+        if (bar && __clientUploadPct < 40) bar.style.width = "40%";
+        if (label && __clientUploadPct < 40) label.textContent = "Uploading… 40%";
       });
-
 
       xhr.addEventListener("error", () => {
+        __clientUploading = false;
+        // 🔓 Re-enable submit button
+        uploadForm
+          ?.querySelector("button[type=submit]")
+          ?.removeAttribute("disabled");
+
         if (label) label.textContent = "Upload error!";
         if (bar) bar.classList.add("bg-danger");
       });
@@ -481,6 +498,7 @@ document.addEventListener("DOMContentLoaded", () => {
       xhr.setRequestHeader("X-Job-Id", jobId);
       xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
       xhr.send(formData);
+
     });
   }
 
@@ -488,6 +506,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // Poller handles progress updates
   // ==============================
   function startProgressPoller(jobId) {
+    let lastPct = 0;
+    let lastPhase = "";
     const buildProgress = document.getElementById("buildProgress");
     const buildBar = document.getElementById("buildBar");
     const buildLabel = document.getElementById("buildLabel");
@@ -496,20 +516,49 @@ document.addEventListener("DOMContentLoaded", () => {
     buildProgress.style.display = "block";
     buildBar.classList.remove("bg-danger");
 
-    const stop = () => { clearInterval(window.__progressPoller); window.__progressPoller = null; };
+    const stop = () => {
+      clearInterval(window.__progressPoller);
+      window.__progressPoller = null;
+    };
 
     window.__progressPoller = setInterval(async () => {
       try {
         const resp = await fetch(`/progress/${jobId}`, { cache: "no-store" });
-        if (!resp.ok) { stop(); buildLabel.textContent = "Progress unavailable."; buildBar.classList.add("bg-danger"); return; }
+        if (!resp.ok) {
+          stop();
+          buildLabel.textContent = "Progress unavailable.";
+          buildBar.classList.add("bg-danger");
+          // 🔓 Re-enable submit button
+          uploadForm?.querySelector('button[type="submit"]')?.removeAttribute("disabled");
+          return;
+        }
 
         const data = await resp.json();
-        const pct = Math.max(0, Math.min(100, Number(data.pct || 0)));
+        const phaseRaw = data.phase || "queued";
+        const phase = phaseRaw.toLowerCase();
+        let pct = Math.max(0, Math.min(100, Number(data.pct || 0)));
+
+        // Ignore fake "queued 0%" after progress already started
+        if (lastPct > 0 && phase === "queued" && pct === 0) {
+          return;
+        }
+
+        // Never allow progress to move backwards
+        if (pct < lastPct && phase !== "error") {
+          pct = lastPct;
+        }
+
+        // Accept this update
+        lastPct = pct;
+        lastPhase = phase;
+
+        // While client upload is active, ignore server upload < 40
+        if (__clientUploading && phase === "uploading" && pct < 40) {
+          return;
+        }
 
         buildBar.style.width = pct + "%";
         buildLabel.textContent = `${data.phase || "Working"}… ${pct}%`;
-
-        const phase = (data.phase || "").toLowerCase();
 
         if (phase === "processing" || phase === "summarizing" || phase === "queued") {
           buildBar.classList.add("processing");
@@ -522,30 +571,39 @@ document.addEventListener("DOMContentLoaded", () => {
           buildBar.classList.remove("processing");
           buildLabel.textContent = "Completed 100%";
 
-
           // ✅ Show uploaded files container
           const uploadedContainer = document.getElementById("uploadedFilesContainer");
           if (uploadedContainer) uploadedContainer.style.display = "block";
 
-          // Optional: refresh /generate page or fetch updated file list
-          setTimeout(() => location.reload(), 400);
+          // Re-enable submit button
+          uploadForm?.querySelector('button[type="submit"]')?.removeAttribute("disabled");
 
-        } else if (phase === "error") {
+          setTimeout(() => location.reload(), 400);
+          return;
+        }
+
+        if (phase === "error") {
           stop();
           buildBar.classList.remove("processing");
           buildLabel.textContent = `Error: ${data.error || "Unknown error"}`;
           buildBar.classList.add("bg-danger");
+
+          // 🔓 Re-enable submit button
+          uploadForm?.querySelector('button[type="submit"]')?.removeAttribute("disabled");
+          return;
         }
       } catch (e) {
         stop();
         buildLabel.textContent = "Could not fetch progress.";
         buildBar.classList.add("bg-danger");
+        // 🔓 Re-enable submit button
+        uploadForm?.querySelector('button[type="submit"]')?.removeAttribute("disabled");
       }
-    }, 800);
+    }, 500);
 
     window.addEventListener("beforeunload", stop, { once: true });
-    document.addEventListener("visibilitychange", () => { if (document.hidden) stop(); });
   }
+
 
   // Auto-start when page already has a job id (e.g., /generate)
   const initialJobId = document.body?.dataset?.jobId || "";

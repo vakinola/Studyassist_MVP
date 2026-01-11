@@ -8,21 +8,15 @@ from pypdf import PdfReader
 import docx
 import shutil
 import stat
-import math
-from tempfile import SpooledTemporaryFile
 from pptx import Presentation
 import time
 import random
+import io
 import logging
 from threading import Thread
 from datetime import datetime
-from werkzeug.wrappers import Request as WerkzeugRequest
 from tempfile import SpooledTemporaryFile
-from flask.wrappers import Request as FlaskRequest
 from flask_mail import Mail, Message
-PROGRESS = {} 
-
-# LangChain / OpenAI
 from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import CharacterTextSplitter
@@ -76,6 +70,13 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(message)s"
 )
+
+PROGRESS = {} 
+
+def set_progress(job_id, phase, pct):
+    PROGRESS[job_id] = {**PROGRESS.get(job_id, {}), "phase": phase, "pct": int(pct)}
+    logging.info("SET_PROGRESS job=%s phase=%s pct=%s", job_id, phase, pct)
+
 
 class Timer:
     def __init__(self, name):
@@ -200,7 +201,7 @@ def _process_job(job_id: str, text: str, persist_dir: str, filename: str, start_
         vectordb = Chroma(embedding_function=embeddings, persist_directory=persist_dir)
 
         total = max(len(docs), 1)
-        batch = 10
+        batch = 25
         added = 0
         for i in range(0, len(docs), batch):
             chunk = docs[i:i + batch]
@@ -244,71 +245,15 @@ def _process_job(job_id: str, text: str, persist_dir: str, filename: str, start_
     except Exception as e:
         PROGRESS[job_id] = {"phase": "error", "pct": end_pct, "error": str(e)}
 
-class _ProgressReportingFile:
-    """
-    Wraps a writable file object and bumps PROGRESS[job_id] on every write().
-    Progress is quantized to 5% steps from 0..40 for the upload phase.
-    """
-    def __init__(self, base_file, job_id, total_len):
-        self._f = base_file
-        self._job_id = job_id
-        self._total = max(1, int(total_len or 0))
-        self._seen = 0
-        # Start from whatever PROGRESS says (usually 0)
-        self._last_step = int(PROGRESS.get(job_id, {}).get("pct", 0))
-        self._last_emit = 0.0  # throttle updates a bit
 
-    def write(self, b):
-        n = self._f.write(b)
-        self._seen += n
-
-        # Map bytes received 0..total → 0..40
-        pct_raw = (self._seen / self._total) * 40.0
-        # Snap to 5% steps: 0,5,10,...,40
-        step = int(min(40, 5 * math.floor(pct_raw / 5.0)))
-
-        now = time.monotonic()
-        if step > self._last_step and (now - self._last_emit) >= 0.09:  # ~10 updates/sec max
-            self._last_step = step
-            self._last_emit = now
-            PROGRESS[self._job_id] = {"phase": "Uploading", "pct": step}
-
-        return n
-
-    # Delegate other attributes/methods to the underlying file (seek, close, etc.)
-    def __getattr__(self, name):
-        return getattr(self._f, name)
-
-
-class StreamingRequest(FlaskRequest):
-    """Use Flask's Request so Flask internals (e.g., .blueprints) exist."""
-    def stream_factory(self, total_content_length, content_type, filename, content_length=None):
-        # Destination file the parser writes to
-        base = SpooledTemporaryFile(max_size=10 * 1024 * 1024, mode="wb+", buffering=0)
-
-        # Job id provided by your XHR header
-        job_id = self.headers.get("X-Job-Id", "")
-        if job_id:
-            total_len = total_content_length or content_length or 0
-            return _ProgressReportingFile(base, job_id, total_len)
-        return base
-
-# Tell Flask to use it
-app.request_class = StreamingRequest
 
 
 # ---------- Routes ----------
 @app.get("/")
-def index():
-    #landing page for uploading document
-    return render_template("index.html")
-
-
-# Home = just go to index (no clearing)
 @app.get("/home")
 def home():
-    return redirect(url_for("index"))
-
+    #landing page for uploading document
+    return render_template("home.html")
 
 
 @app.post("/delete_doc")
@@ -363,12 +308,12 @@ def delete_doc():
         session.pop("persist_directory", None)
 
     flash(f"Deleted '{filename}' successfully.", "success")
-    return jsonify(ok=True)
+    return jsonify(ok=True, message=f"Deleted '{filename}' successfully.")
 
 
 #generate questions
-@app.get("/generate")
-def generate():
+@app.get("/upload_notebook")
+def upload_notebook():
     job_id = session.get("job_id")
     if job_id:
         st = PROGRESS.get(job_id, {})
@@ -395,7 +340,7 @@ def generate():
             session.pop("job_id", None)
             job_id = None
 
-    return render_template("generate.html",
+    return render_template("upload_notebook.html",
         filename=session.get("uploaded_filename"),
         summary=session.get("summary_text"),
         job_id=job_id,  # will be None if finished
@@ -437,24 +382,17 @@ def init_upload():
     return jsonify({"ok": True, "job_id": job_id})
 
 
-@app.post("/progress_update")
-def progress_update():
-    data = request.get_json(silent=True) or {}
-    job_id = data.get("job_id")
-    raw = max(0, min(100, int(data.get("pct", 0))))
-    if not job_id or job_id not in PROGRESS:
-        return jsonify({"ok": False, "error": "Unknown job_id"}), 400
-
-    mapped = int(round(raw * 0.40))  # 0..40
-    PROGRESS[job_id]["phase"] = "Uploading"
-    PROGRESS[job_id]["pct"] = mapped
-    return ("", 204)
-
 @app.post("/upload")
 def upload():
     job_id = request.headers.get("X-Job-Id") or session.get("job_id")
     if not job_id:
         job_id = uuid.uuid4().hex
+    logging.info(
+        "UPLOAD START job=%s header_job=%s content_length=%s",
+        job_id,
+        request.headers.get("X-Job-Id"),
+        request.content_length,
+    )
 
     session["job_id"] = job_id
     PROGRESS.setdefault(job_id, {"phase": "Uploading", "pct": 0})
@@ -468,7 +406,7 @@ def upload():
         if is_xhr:
             return jsonify(ok=False, error=msg), 400
         flash(msg, "error")
-        return redirect(url_for("generate"))
+        return redirect(url_for("upload_notebook"))
 
     f = request.files["file"]
 
@@ -477,18 +415,24 @@ def upload():
         if is_xhr:
             return jsonify(ok=False, error=msg), 400
         flash(msg, "error")
-        return redirect(url_for("generate"))
+        return redirect(url_for("upload_notebook"))
 
     if not allowed_file(f.filename):
         msg = "Unsupported file type. Please upload PDF, DOCX, PPTX or TXT."
         if is_xhr:
             return jsonify(ok=False, error=msg), 400
         flash(msg, "error")
-        return redirect(url_for("generate"))
+        return redirect(url_for("upload_notebook"))
 
     # Save + extract text
     text, base, filename = process_uploaded_file(f)
 
+    # Here upload is complete → move to 40%
+    PROGRESS[job_id] = {
+        "phase": "queued",
+        "pct": 40,
+        "filename": filename
+    }
     # Track uploaded list for sidebar
     uploaded = session.get("uploaded_files", [])
     uploaded.append(filename)
@@ -536,15 +480,17 @@ def upload():
             filename=filename
         ), 200
 
-    return redirect(url_for("generate"))
+    return redirect(url_for("upload_notebook"))
 
 
 @app.get("/progress/<job_id>")
 def get_progress(job_id):
-    st = PROGRESS.get(job_id, {"phase": "queued", "pct": 0})
-    app.logger.debug("PROGRESS[%s] -> %s", job_id, st)
+    st = PROGRESS.get(job_id)
+    if not st:
+        # IMPORTANT: don't send {"queued":0} fallback, it causes UI jumps
+        return jsonify({"ok": False, "missing": True, "phase": "missing", "pct": 0}), 404
 
-    resp = jsonify(st)
+    resp = jsonify({"ok": True, **st})
     resp.headers["Cache-Control"] = "no-store"
     return resp
 
@@ -761,7 +707,7 @@ def send_feedback():
 if __name__ == "__main__":
     import os
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=port, threaded=True)
 
 
 
