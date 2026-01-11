@@ -22,7 +22,7 @@
     <title>StudyAssists | Results </title>
 
     <!-- Page CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/generate.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/upload_notebook.css') }}" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/font-awesome.min.css') }}" />
     <style>
     </style>
@@ -40,7 +40,7 @@
     <header id="header" class="header-section">
         <div class="header-container">
             <nav class="navbar">
-                <a class="brand" href="{{ url_for('index') }}" aria-label="StudyAssists home">
+                <a class="brand" href="{{ url_for('home') }}" aria-label="StudyAssists home">
                     <svg class="brand-icon" width="36" height="36" viewBox="0 0 24 24" aria-hidden="true">
                         <path fill="#22c1ff" d="M2 7l10-5 10 5v2l-10 5L2 9z"></path>
                         <path fill="#0ea5a4" d="M2 12l10-5 10 5v2l-10 5L2 14z" opacity="0.15"></path>
@@ -50,8 +50,8 @@
                 <div class="d-flex menu-wrap">
                     <div id="navmenu" class="mainmenu">
                         <ul class="nav">
-                            <li><a href="{{ url_for('index') }}">Home</a></li>
-                            <li><a class="active" href="{{ url_for('generate') }}">Upload Notebook</a></li>
+                            <li><a href="{{ url_for('home') }}">Home</a></li>
+                            <li><a class="active" href="{{ url_for('upload_notebook') }}">Upload Notebook</a></li>
                             <li><a href="{{ url_for('results') }}">Results</a></li>
                         </ul>
                     </div>
@@ -69,10 +69,10 @@
             </button>
 
             <nav class="sidebar-nav-bottom sidebar-nav-bottom-results" aria-label="Secondary">
-                <a href="{{ url_for('index') }}" class="nav-link">
+                <a href="{{ url_for('home') }}" class="nav-link">
                     <i class="fa fa-home" aria-hidden="true"></i> <span>Home</span>
                 </a>
-                <a href="{{ url_for('generate') }}" class="nav-link">
+                <a href="{{ url_for('upload_notebook') }}" class="nav-link">
                     <i class="fa fa-lightbulb-o" aria-hidden="true"></i> <span>Generate-Quiz</span>
                 </a>
                 <a href="#" class="nav-link">
@@ -86,7 +86,7 @@
             <!-- Mobile header -->
             <div class="mobile-header">
                 <div class="logo-text">
-                    <a class="brand" href="{{ url_for('index') }}" aria-label="StudyAssists home">
+                    <a class="brand" href="{{ url_for('home') }}" aria-label="StudyAssists home">
                         <svg class="brand-icon" width="36" height="36" viewBox="0 0 24 24" aria-hidden="true">
                             <path fill="#22c1ff" d="M2 7l10-5 10 5v2l-10 5L2 9z"></path>
                             <path fill="#0ea5a4" d="M2 12l10-5 10 5v2l-10 5L2 14z" opacity="0.15"></path>
@@ -98,6 +98,8 @@
                     <i class="fa fa-bars" aria-hidden="true"></i>
                 </button>
             </div>
+            <!-- JS alerts -->
+            <div id="alertContainer"></div>
 
 
             <div class="results_container">
@@ -147,7 +149,8 @@
 
 
 
-
+    <!--JS removed-->
+    <!--
     <script>
         const modal = document.getElementById('customModal');
         const openBtn = document.getElementById('openModalBtn');
@@ -170,6 +173,7 @@
             }
         });
     </script>
+    -->
 
 </body>
 
