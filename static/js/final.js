@@ -773,7 +773,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!exportDiv) return;
 
     exportDiv.innerHTML = `
-    <button id="exportPdfBtn" class="btn btn-outline-secondary mybutton">
+    <button id="exportPdfBtn" class="btn btn-outline-secondary exportpdf">
       Export PDF
     </button>
   `;
@@ -1093,7 +1093,10 @@ document.addEventListener("DOMContentLoaded", () => {
     e.stopPropagation();
     const icon = mobileToggle.querySelector("i");
     const isOpening = !sidebar.classList.contains("open");
+
     sidebar.classList.toggle("open", isOpening);
+    document.body.classList.toggle("menu-open", isOpening);
+
     if (isOpening) {
       icon.classList.remove("fa-bars");
       icon.classList.add("fa-times");
@@ -1102,6 +1105,7 @@ document.addEventListener("DOMContentLoaded", () => {
       icon.classList.add("fa-bars");
     }
   });
+
 
 
   // Select all feedback trigger links
